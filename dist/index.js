@@ -190,12 +190,52 @@ define("@scom/scom-governance-proposal/index.css.ts", ["require", "exports", "@i
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_3.Styles.Theme.ThemeVars;
-    exports.default = components_3.Styles.style({});
+    exports.default = components_3.Styles.style({
+        $nest: {
+            '.custom-combobox .selection': {
+                background: 'transparent',
+                border: 'none',
+                $nest: {
+                    'input': {
+                        background: 'transparent',
+                        color: Theme.text.third,
+                        border: 'none'
+                    }
+                }
+            },
+            '.custom-combobox .icon-btn': {
+                border: 'none'
+            },
+            'input': {
+                background: 'transparent',
+                color: Theme.text.third,
+                border: 'none'
+            },
+            '.btn-os': {
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '1rem',
+                borderRadius: 5,
+                background: Theme.background.gradient,
+                $nest: {
+                    '&:disabled': {
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    });
 });
 define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts"], function (require, exports, components_4, assets_1, index_1, data_json_1, eth_wallet_2, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_4.Styles.Theme.ThemeVars;
+    const actions = [
+        {
+            label: 'Modify Restricted Oracle',
+            value: 'restrictedOracle'
+        }
+    ];
     let GovernanceProposal = class GovernanceProposal extends components_4.Module {
         constructor() {
             super(...arguments);
@@ -204,6 +244,22 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 networks: []
             };
             this.tag = {};
+            this.form = {
+                action: '',
+                duration: 0,
+                quorum: 0,
+                value: '',
+                dayValue: 0,
+                address: '',
+                delay: 0,
+                threshold: 0,
+                tokenName: '',
+                firstTokenName: '',
+                secondTokenName: '',
+                systemParamOption: '',
+                profileOption: ''
+            };
+            this.validateStatus = {};
             this.initWallet = async () => {
                 try {
                     await eth_wallet_2.Wallet.getClientInstance().init();
@@ -364,6 +420,15 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         async refreshUI() {
             await this.initializeWidgetConfig();
         }
+        onChangeAction(source) {
+            this.form.action = source.selectedItem.value;
+            this.validateStatus.action = true;
+            if (this.lblActionErr)
+                this.lblActionErr.visible = false;
+        }
+        onSelectDay(value, name) { }
+        onChangedInput(source, name) { }
+        onConfirm() { }
         render() {
             return (this.$render("i-scom-dapp-container", { id: "dappContainer" },
                 this.$render("i-panel", { class: index_css_1.default, background: { color: Theme.background.main } },
@@ -371,7 +436,60 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         this.$render("i-vstack", { id: "loadingElm", class: "i-loading-overlay" },
                             this.$render("i-vstack", { class: "i-loading-spinner", horizontalAlignment: "center", verticalAlignment: "center" },
                                 this.$render("i-icon", { class: "i-loading-spinner_icon", image: { url: assets_1.default.fullPath('img/loading.svg'), width: 36, height: 36 } }),
-                                this.$render("i-label", { caption: "Loading...", font: { color: '#FD4A4C', size: '1.5em' }, class: "i-loading-spinner_text" })))),
+                                this.$render("i-label", { caption: "Loading...", font: { color: '#FD4A4C', size: '1.5em' }, class: "i-loading-spinner_text" }))),
+                        this.$render("i-vstack", { width: "100%", height: "100%", maxWidth: 1200, padding: { top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }, margin: { left: 'auto', right: 'auto' }, gap: "1rem" },
+                            this.$render("i-hstack", { width: "100%", horizontalAlignment: "center", margin: { bottom: '1.25rem', left: 'auto', right: 'auto' } },
+                                this.$render("i-label", { caption: "Create new executive proposal", font: { size: 'clamp(1.5rem, 1.4rem + 0.5vw, 2rem)', bold: true, color: Theme.text.third } })),
+                            this.$render("i-vstack", { width: "100%", padding: { top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }, gap: "1rem" },
+                                this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
+                                    this.$render("i-vstack", { gap: '0.5rem', stack: { grow: '1', shrink: '0', basis: '330px' } },
+                                        this.$render("i-hstack", { verticalAlignment: "center", gap: "4px" },
+                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
+                                            this.$render("i-label", { caption: "Action", font: { size: '1rem', weight: 600 } })),
+                                        this.$render("i-combo-box", { id: "comboAction", class: "custom-combobox", height: 32, minWidth: 180, margin: { top: '1rem' }, border: { bottom: { width: '1px', style: 'solid', color: Theme.colors.primary.main } }, icon: { name: "angle-down", fill: Theme.text.third, width: 12, height: 12 }, font: { size: '0.875rem' }, items: actions, onChanged: this.onChangeAction.bind(this) }),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblActionErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
+                                            this.$render("i-label", { font: { size: '0.875rem' }, caption: "Learn more about actions", margin: { left: 'auto' } }))),
+                                    this.$render("i-vstack", { id: "systemStack", width: "100%", gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' }, visible: false })),
+                                this.$render("i-vstack", { id: "firstAddressStack", width: "100%", gap: "0.5rem", visible: false }),
+                                this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
+                                    this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
+                                        this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
+                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
+                                            this.$render("i-label", { id: "lblDuration", caption: "Duration", font: { size: '1rem', weight: 600 } })),
+                                        this.$render("i-input", { id: "edtDuration", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onSelectDay(source.value, 'dayValue') }),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblDurationErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
+                                            this.$render("i-label", { id: "lblDurationNote", margin: { left: 'auto' }, font: { size: '0.875rem' }, caption: "Minimum: 0 second" }))),
+                                    this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
+                                        this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
+                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
+                                            this.$render("i-label", { id: "lblDelay", caption: "Delay", font: { size: '1rem', weight: 600 } })),
+                                        this.$render("i-input", { id: "edtDelay", class: 'poll-input', height: 32, width: '100%', inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onSelectDay(source.value, 'delay') }),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblDelayErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
+                                            this.$render("i-vstack", { margin: { left: 'auto' }, class: "text-right" },
+                                                this.$render("i-label", { id: "lblDelayMinNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second" }),
+                                                this.$render("i-label", { id: "lblDelayMaxNote", font: { size: '0.875rem' }, caption: "Maximum: 0 second" }))))),
+                                this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
+                                    this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
+                                        this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
+                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
+                                            this.$render("i-label", { caption: "Quorum", font: { size: '1rem', weight: 600 } })),
+                                        this.$render("i-input", { id: "edtQuorum", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onChangedInput(source, 'quorum') }),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblQuorumErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
+                                            this.$render("i-label", { id: "lblQuorumNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second", margin: { left: 'auto' } }))),
+                                    this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
+                                        this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
+                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
+                                            this.$render("i-label", { caption: "Threshold", font: { size: '1rem', weight: 600 } })),
+                                        this.$render("i-input", { id: "edtThreshold", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onChangedInput(source, 'threshold') }),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblThresholdErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
+                                            this.$render("i-label", { font: { size: '0.875rem' }, caption: "Minimum: 50%", margin: { left: 'auto' } }))))),
+                            this.$render("i-vstack", { width: "100%", padding: { left: "1rem", right: "1rem" } },
+                                this.$render("i-button", { id: 'btnConfirm', class: 'btn-os', height: 'auto', caption: "Create Executive Proposal", padding: { top: '0.75rem', bottom: '0.75rem', left: '1.5rem', right: '1.5rem' }, border: { radius: 5 }, font: { weight: 600 }, rightIcon: { spin: true, visible: false }, enabled: false, onClick: this.onConfirm.bind(this) })))),
                     this.$render("i-scom-tx-status-modal", { id: "txStatusModal" }),
                     this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] }))));
         }

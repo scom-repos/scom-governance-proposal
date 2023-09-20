@@ -12,6 +12,20 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         defaultChainId?: number;
         showHeader?: boolean;
     }
+    export interface IValidateStatus {
+        action?: boolean;
+        duration?: boolean;
+        quorum?: boolean;
+        delay?: boolean;
+        threshold?: boolean;
+        value?: boolean;
+        dayValue?: boolean;
+        address?: boolean;
+        firstTokenName?: boolean;
+        secondTokenName?: boolean;
+        systemParamOption?: boolean;
+        profileOption?: boolean;
+    }
 }
 /// <amd-module name="@scom/scom-governance-proposal/assets.ts" />
 declare module "@scom/scom-governance-proposal/assets.ts" {
@@ -109,11 +123,32 @@ declare module "@scom/scom-governance-proposal" {
     export default class GovernanceProposal extends Module {
         private dappContainer;
         private loadingElm;
+        private comboAction;
+        private lblActionErr;
+        private firstAddressStack;
+        private lblDuration;
+        private edtDuration;
+        private lblDurationErr;
+        private lblDurationNote;
+        private lblDelay;
+        private edtDelay;
+        private lblDelayErr;
+        private lblDelayMinNote;
+        private lblDelayMaxNote;
+        private edtQuorum;
+        private lblQuorumErr;
+        private lblQuorumNote;
+        private edtThreshold;
+        private lblThresholdErr;
+        private btnConfirm;
+        private systemStack;
         private txStatusModal;
         private mdWallet;
         private state;
         private _data;
         tag: any;
+        private form;
+        private validateStatus;
         private get chainId();
         get defaultChainId(): number;
         set defaultChainId(value: number);
@@ -139,6 +174,10 @@ declare module "@scom/scom-governance-proposal" {
         private initWallet;
         private initializeWidgetConfig;
         private connectWallet;
+        private onChangeAction;
+        private onSelectDay;
+        private onChangedInput;
+        private onConfirm;
         render(): any;
     }
 }
