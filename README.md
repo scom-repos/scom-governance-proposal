@@ -1,1 +1,1 @@
-# scom-governance
+# scom-governance-proposal
