@@ -5,7 +5,15 @@
 /// <amd-module name="@scom/scom-governance-proposal/interface.ts" />
 declare module "@scom/scom-governance-proposal/interface.ts" {
     import { INetworkConfig } from "@scom/scom-network-picker";
+    import { ITokenObject } from "@scom/scom-token-list";
     import { IWalletPlugin } from "@scom/scom-wallet-modal";
+    export enum QueueType {
+        PRIORITY_QUEUE = 0,
+        RANGE_QUEUE = 1,
+        GROUP_QUEUE = 2,
+        PEGGED_QUEUE = 3,
+        OTC_QUEUE = 4
+    }
     export interface IGovernanceProposal {
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
@@ -21,10 +29,25 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         value?: boolean;
         dayValue?: boolean;
         address?: boolean;
-        firstTokenName?: boolean;
-        secondTokenName?: boolean;
+        firstToken?: boolean;
+        secondToken?: boolean;
         systemParamOption?: boolean;
         profileOption?: boolean;
+    }
+    export interface IProposalForm {
+        action: string;
+        duration: number;
+        quorum: number;
+        value: string;
+        dayValue: number;
+        address: string;
+        delay: number;
+        threshold: number;
+        tokenName: string;
+        firstToken?: ITokenObject;
+        secondToken?: ITokenObject;
+        systemParamOption: string;
+        profileOption: string;
     }
 }
 /// <amd-module name="@scom/scom-governance-proposal/assets.ts" />
@@ -41,6 +64,9 @@ declare module "@scom/scom-governance-proposal/store/core.ts" {
         OAXDEX_Governance: string;
         OAXDEX_VotingRegistry: string;
         GOV_TOKEN: string;
+        OSWAP_RestrictedFactory: string;
+        OSWAP_VotingExecutor4: string;
+        OSWAP_RestrictedOracle: string;
     }
     export const coreAddress: {
         [chainId: number]: CoreAddress;
@@ -49,6 +75,7 @@ declare module "@scom/scom-governance-proposal/store/core.ts" {
 /// <amd-module name="@scom/scom-governance-proposal/store/utils.ts" />
 declare module "@scom/scom-governance-proposal/store/utils.ts" {
     import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork } from "@ijstech/eth-wallet";
+    import { ITokenObject } from "@scom/scom-token-list";
     export class State {
         infuraId: string;
         networkMap: {
@@ -65,11 +92,15 @@ declare module "@scom/scom-governance-proposal/store/utils.ts" {
         private setNetworkList;
         setApprovalModelAction(options: IERC20ApprovalEventOptions): Promise<import("@ijstech/eth-wallet").IERC20ApprovalAction>;
         getAddresses(chainId?: number): import("@scom/scom-governance-proposal/store/core.ts").CoreAddress;
+        getGovToken(chainId: number): ITokenObject;
     }
     export function isClientWalletConnected(): boolean;
+    export const getWETH: (chainId: number) => ITokenObject;
+    export const isAddressValid: (address: string) => any;
 }
 /// <amd-module name="@scom/scom-governance-proposal/store/index.ts" />
 declare module "@scom/scom-governance-proposal/store/index.ts" {
+    export const nullAddress = "0x0000000000000000000000000000000000000000";
     export * from "@scom/scom-governance-proposal/store/utils.ts";
 }
 /// <amd-module name="@scom/scom-governance-proposal/data.json.ts" />
@@ -100,6 +131,25 @@ declare module "@scom/scom-governance-proposal/index.css.ts" {
     const _default_2: string;
     export default _default_2;
 }
+/// <amd-module name="@scom/scom-governance-proposal/api.ts" />
+declare module "@scom/scom-governance-proposal/api.ts" {
+    import { BigNumber } from "@ijstech/eth-wallet";
+    import { ITokenObject } from "@scom/scom-token-list";
+    import { State } from "@scom/scom-governance-proposal/store/index.ts";
+    export function stakeOf(state: State, address: string): Promise<BigNumber>;
+    export function getVotingValue(state: State, param1: any): Promise<{
+        minExeDelay?: number;
+        minVoteDuration?: number;
+        maxVoteDuration?: number;
+        minOaxTokenToCreateVote?: number;
+        minQuorum?: number;
+    }>;
+    export function getPair(state: State, tokenA: ITokenObject, tokenB: ITokenObject): Promise<string>;
+    export function doNewVote(state: State, quorum: number, threshold: number, voteEndTime: number, exeDelay: number, exeCmd: string, exeParams1: any, exeParams2: any): Promise<{
+        result: string;
+        error: Error;
+    }>;
+}
 /// <amd-module name="@scom/scom-governance-proposal" />
 declare module "@scom/scom-governance-proposal" {
     import { ControlElement, Module } from "@ijstech/components";
@@ -123,23 +173,29 @@ declare module "@scom/scom-governance-proposal" {
     export default class GovernanceProposal extends Module {
         private dappContainer;
         private loadingElm;
-        private comboAction;
-        private lblActionErr;
+        private actionSelect;
+        private actionErr;
         private firstAddressStack;
+        private actionStack;
+        private tokenPairStack;
+        private firstTokenSelection;
+        private firstTokenErr;
+        private secondTokenSelection;
+        private secondTokenErr;
         private lblDuration;
-        private edtDuration;
-        private lblDurationErr;
+        private durationInput;
+        private durationErr;
         private lblDurationNote;
         private lblDelay;
-        private edtDelay;
-        private lblDelayErr;
+        private delayInput;
+        private delayErr;
         private lblDelayMinNote;
         private lblDelayMaxNote;
-        private edtQuorum;
-        private lblQuorumErr;
+        private quorumInput;
+        private quorumErr;
         private lblQuorumNote;
-        private edtThreshold;
-        private lblThresholdErr;
+        private thresholdInput;
+        private thresholdErr;
         private btnConfirm;
         private systemStack;
         private txStatusModal;
@@ -147,8 +203,17 @@ declare module "@scom/scom-governance-proposal" {
         private state;
         private _data;
         tag: any;
+        private minVoteDurationInDays;
+        private maxVoteDurationInDays;
+        private minQuorum;
+        private minThreshold;
+        private minDelay;
+        private currentStake;
+        private dayValueDefault;
+        private dayInSeconds;
         private form;
         private validateStatus;
+        private rules;
         private get chainId();
         get defaultChainId(): number;
         set defaultChainId(value: number);
@@ -158,6 +223,9 @@ declare module "@scom/scom-governance-proposal" {
         set networks(value: INetworkConfig[]);
         get showHeader(): boolean;
         set showHeader(value: boolean);
+        private get isTokenPairInputShown();
+        private get hasEnoughStake();
+        private get isValidToCreateVote();
         removeRpcWalletEvents(): void;
         onHide(): void;
         isEmptyData(value: IGovernanceProposal): boolean;
@@ -172,11 +240,23 @@ declare module "@scom/scom-governance-proposal" {
         private resetRpcWallet;
         private refreshUI;
         private initWallet;
+        private getGovParamValue;
+        private checkTimeFormat;
         private initializeWidgetConfig;
+        private showResultMessage;
         private connectWallet;
+        private updateBalance;
         private onChangeAction;
+        private getErrorMessage;
+        private onValidateInput;
+        private onValidateSelection;
+        private onSelectFirstToken;
+        private onSelectSecondToken;
         private onSelectDay;
         private onChangedInput;
+        private createExecutiveProposal;
+        private getCheckingProps;
+        private onValidate;
         private onConfirm;
         render(): any;
     }

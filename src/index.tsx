@@ -18,13 +18,13 @@ import { INetworkConfig } from "@scom/scom-network-picker";
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal, { IWalletPlugin } from "@scom/scom-wallet-modal";
-import { IGovernanceProposal, IValidateStatus } from "./interface";
+import { IGovernanceProposal, IProposalForm, IValidateStatus, QueueType } from "./interface";
 import Assets from './assets';
-import { isClientWalletConnected, State } from "./store/index";
+import { isAddressValid, isClientWalletConnected, nullAddress, State } from "./store/index";
 import configData from './data.json';
 import { Constants, Wallet } from "@ijstech/eth-wallet";
 import customStyles from './index.css';
-import { getVotingValue, stakeOf } from "./api";
+import { doNewVote, getPair, getVotingValue, stakeOf } from "./api";
 import { ITokenObject, tokenStore } from "@scom/scom-token-list";
 
 const Theme = Styles.Theme.ThemeVars;
@@ -56,29 +56,29 @@ declare global {
 export default class GovernanceProposal extends Module {
     private dappContainer: ScomDappContainer;
     private loadingElm: Panel;
-    private comboAction: ComboBox;
-    private lblActionErr: Label;
+    private actionSelect: ComboBox;
+    private actionErr: Label;
     private firstAddressStack: VStack;
     private actionStack: VStack;
     private tokenPairStack: VStack;
-    private firstTokenNameSelection: ScomTokenInput;
-    private firstTokenNameErr: Label;
-    private secondTokenNameSelection: ScomTokenInput;
-    private secondTokenNameErr: Label;
+    private firstTokenSelection: ScomTokenInput;
+    private firstTokenErr: Label;
+    private secondTokenSelection: ScomTokenInput;
+    private secondTokenErr: Label;
     private lblDuration: Label;
-    private edtDuration: Input;
-    private lblDurationErr: Label;
+    private durationInput: Input;
+    private durationErr: Label;
     private lblDurationNote: Label;
     private lblDelay: Label;
-    private edtDelay: Input;
-    private lblDelayErr: Label;
+    private delayInput: Input;
+    private delayErr: Label;
     private lblDelayMinNote: Label;
     private lblDelayMaxNote: Label;
-    private edtQuorum: Input;
-    private lblQuorumErr: Label;
+    private quorumInput: Input;
+    private quorumErr: Label;
     private lblQuorumNote: Label;
-    private edtThreshold: Input;
-    private lblThresholdErr: Label;
+    private thresholdInput: Input;
+    private thresholdErr: Label;
     private btnConfirm: Button;
     private systemStack: VStack;
     private txStatusModal: ScomTxStatusModal;
@@ -98,7 +98,7 @@ export default class GovernanceProposal extends Module {
     private dayValueDefault: number = 7;
     private dayInSeconds = 24 * 60 * 60;
 
-    private form = {
+    private form: IProposalForm = {
         action: '',
         duration: 0,
         quorum: 0,
@@ -108,30 +108,84 @@ export default class GovernanceProposal extends Module {
         delay: 0,
         threshold: 0,
         tokenName: '',
-        firstTokenName: '',
-        secondTokenName: '',
         systemParamOption: '',
         profileOption: ''
     }
     private validateStatus: IValidateStatus = {}
     private rules = {
-        firstTokenName: [
+        action: [
+          {
+            required: true,
+            message: 'Please select Action'
+          }
+        ],
+        duration: [
+          {
+            required: true,
+            message: `Please select Duration (seconds)`
+          },
+          {
+            message: (minVoteDurationInDays: number) => `Duration must be greater than or equal to ${minVoteDurationInDays}`,
+            validator: (value: any) => +value >= this.minVoteDurationInDays
+          },
+        ],
+        quorum: [
+          {
+            required: true,
+            message: 'Please input Quorum'
+          },
+          {
+            message: (minQuorum: number) => `Quorum must be greater than or equal to ${minQuorum}`,
+            validator: (value: any) => +value >= this.minQuorum
+          },
+        ],
+        address: [
+          {
+            required: true,
+            message: `Please input Address`
+          },
+          {
+            validator: async (value: any) => isAddressValid(value),
+            message: `Please enter valid Address`
+          },
+        ],
+        delay: [
+          {
+            required: true,
+            message: `Please select Delay (seconds)`
+          },
+          {
+            message: (minDelay: number) => `Delay must be greater than or equal to ${minDelay}`,
+            validator: (value: any) => +value >= this.minDelay
+          },
+        ],
+        threshold: [
+          {
+            required: true,
+            message: `Please input Threshold`
+          },
+          {
+            message: `Threshold must be greater than or equal to 50 and smaller than or equal to 100`,
+            validator: (value: any) => +value >= 50 && +value <= 100
+          },
+        ],
+        firstToken: [
             {
                 required: true,
                 message: 'Please Select a pair'
             },
             {
-                validator: (value: any) => value !== this.form.secondTokenName,
+                validator: (value: any) => value !== this.form.secondToken?.address ?? this.form.secondToken?.symbol,
                 message: 'A pair must not be the same'
             },
         ],
-        secondTokenName: [
+        secondToken: [
             {
                 required: true,
                 message: 'Please Select a pair'
             },
             {
-                validator: (value: any) => value !== this.form.firstTokenName,
+                validator: (value: any) => value !== this.form.firstToken?.address ?? this.form.firstToken?.symbol,
                 message: 'A pair must not be the same'
             },
         ]
@@ -199,7 +253,7 @@ export default class GovernanceProposal extends Module {
         this.isReadyCallbackQueued = true;
         super.init();
         this.state = new State(configData);
-        this.firstTokenNameSelection.title = (
+        this.firstTokenSelection.title = (
             <i-hstack gap="4px" verticalAlignment="center">
                 <i-label caption="Select a token" font={{ color: Theme.colors.primary.main, size: '1.25rem', bold: true }}></i-label>
                 <i-icon
@@ -209,7 +263,7 @@ export default class GovernanceProposal extends Module {
                 ></i-icon>
             </i-hstack>
         );
-        this.secondTokenNameSelection.title = (
+        this.secondTokenSelection.title = (
             <i-hstack gap="4px" verticalAlignment="center">
                 <i-label caption="Select a token" font={{ color: Theme.colors.primary.main, size: '1.25rem', bold: true }}></i-label>
                 <i-icon
@@ -290,18 +344,20 @@ export default class GovernanceProposal extends Module {
         const rpcWalletId = this.state.initRpcWallet(this.defaultChainId);
         const rpcWallet = this.state.getRpcWallet();
         const chainChangedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.ChainChanged, async (chainId: number) => {
-            this.firstTokenNameSelection.token = null;
-            this.secondTokenNameSelection.token = null;
-            this.firstTokenNameSelection.classList.remove('has-token');
-            this.secondTokenNameSelection.classList.remove('has-token');
+            this.firstTokenSelection.token = null;
+            this.secondTokenSelection.token = null;
+            this.form.firstToken = undefined;
+            this.form.secondToken = undefined;
+            this.firstTokenSelection.classList.remove('has-token');
+            this.secondTokenSelection.classList.remove('has-token');
             this.refreshUI();
         });
         const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
             this.refreshUI();
         });
         if (rpcWallet.instanceId) {
-            if (this.firstTokenNameSelection) this.firstTokenNameSelection.rpcWalletId = rpcWallet.instanceId;
-            if (this.secondTokenNameSelection) this.secondTokenNameSelection.rpcWalletId = rpcWallet.instanceId;
+            if (this.firstTokenSelection) this.firstTokenSelection.rpcWalletId = rpcWallet.instanceId;
+            if (this.secondTokenSelection) this.secondTokenSelection.rpcWalletId = rpcWallet.instanceId;
         }
         const data: any = {
             defaultChainId: this.defaultChainId,
@@ -354,6 +410,7 @@ export default class GovernanceProposal extends Module {
     private initializeWidgetConfig = async () => {
         setTimeout(async () => {
             const chainId = this.chainId;
+            tokenStore.updateTokenMapData(chainId);
             await this.initWallet();
             await this.getGovParamValue();
             this.updateBalance();
@@ -369,16 +426,28 @@ export default class GovernanceProposal extends Module {
             this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
             this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
             this.lblDelayMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
-            this.edtDuration.placeholder = `${Math.ceil(this.minVoteDurationInDays)}`;
-            this.edtDelay.placeholder = `${Math.ceil(this.minDelay)}`;
-            this.edtDuration.value = this.form.duration;
-            this.edtDelay.value = this.form.delay;
-            this.edtQuorum.value = this.form.quorum;
-            this.edtThreshold.value = this.form.threshold;
+            this.durationInput.placeholder = `${Math.ceil(this.minVoteDurationInDays)}`;
+            this.delayInput.placeholder = `${Math.ceil(this.minDelay)}`;
+            this.durationInput.value = this.form.duration;
+            this.delayInput.value = this.form.delay;
+            this.quorumInput.value = this.form.quorum;
+            this.thresholdInput.value = this.form.threshold;
             const tokens = tokenStore.getTokenList(chainId);
-            this.firstTokenNameSelection.tokenDataListProp = tokens;
-            this.secondTokenNameSelection.tokenDataListProp = tokens;
+            this.firstTokenSelection.tokenDataListProp = tokens;
+            this.secondTokenSelection.tokenDataListProp = tokens;
         });
+    }
+
+    private showResultMessage = (status: 'warning' | 'success' | 'error', content?: string | Error) => {
+        if (!this.txStatusModal) return;
+        let params: any = { status };
+        if (status === 'success') {
+            params.txtHash = content;
+        } else {
+            params.content = content;
+        }
+        this.txStatusModal.message = { ...params };
+        this.txStatusModal.showModal();
     }
 
     private connectWallet = async () => {
@@ -401,19 +470,66 @@ export default class GovernanceProposal extends Module {
         const rpcWallet = this.state.getRpcWallet();
         if (rpcWallet.address) {
             if (!this.isEmptyData(this._data)) await tokenStore.updateAllTokenBalances(rpcWallet);
-            let tokenBalances = tokenStore.getTokenBalancesByChainId(this.chainId);
         }
     }
 
     private onChangeAction(source: ComboBox) {
         this.form.action = (source.selectedItem as IComboItem).value;
         this.validateStatus.action = true;
-        if (this.lblActionErr) this.lblActionErr.visible = false;
+        if (this.actionErr) this.actionErr.visible = false;
         this.actionStack.visible = this.tokenPairStack.visible = this.isTokenPairInputShown;
-        this.firstTokenNameSelection.token = null;
-        this.secondTokenNameSelection.token = null;
-        this.firstTokenNameSelection.classList.remove('has-token');
-        this.secondTokenNameSelection.classList.remove('has-token');
+        this.firstTokenSelection.token = null;
+        this.secondTokenSelection.token = null;
+        this.form.firstToken = undefined;
+        this.form.secondToken = undefined;
+        this.firstTokenSelection.classList.remove('has-token');
+        this.secondTokenSelection.classList.remove('has-token');
+    }
+
+    private getErrorMessage(name: string, callback: any) {
+        let message = '';
+        switch (name) {
+            case 'duration':
+                message = callback(this.minVoteDurationInDays);
+                break;
+            case 'quorum':
+                message = callback(this.minQuorum);
+                break;
+            case 'dayValue':
+                message = callback(this.dayValueDefault);
+                break;
+            case 'delay':
+                message = callback(this.minDelay);
+                break;
+        }
+        return message;
+    }
+
+    private onValidateInput(name: string) {
+        const rules = this.rules[name] || [];
+        let result = true;
+        if (rules.length) {
+            const inputElm = this[`${name}Input`] as Input;
+            const errorElm = this[`${name}Err`] as Label;
+            errorElm && (errorElm.visible = false);
+            const selectElm = this[`${name}Select`] as ComboBox;
+            if (!inputElm && !selectElm) return false;
+            const ruleLength = rules.length;
+            for (let i = 0; i < ruleLength; i++) {
+                const rule = rules[i];
+                const emptyValue = ((inputElm && (inputElm.value === undefined || inputElm.value === '')) || (selectElm && !selectElm.selectedItem));
+                const invalidValue = (rule.required !== undefined && emptyValue) ||
+                    (rule.max !== undefined && inputElm.value?.length > rule.max) ||
+                    (rule.validator !== undefined && !rule.validator(inputElm.value));
+                if (invalidValue && errorElm) {
+                    errorElm.caption = typeof rule.message === 'string' ? rule.message : this.getErrorMessage(name, rule.message);
+                    errorElm.visible = true;
+                    result = false;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     private onValidateSelection(name: string) {
@@ -428,7 +544,7 @@ export default class GovernanceProposal extends Module {
             for (let i = 0; i < ruleLength; i++) {
                 const rule = rules[i];
                 const invalidValue = (rule.required !== undefined && !inputElm.token) ||
-                    (rule.validator !== undefined && inputElm.token && !rule.validator(inputElm.token.address));
+                    (rule.validator !== undefined && inputElm.token && !rule.validator(inputElm.token.address ?? inputElm.token.symbol));
                 if (invalidValue && errorElm) {
                     errorElm.caption = rule.message;
                     errorElm.visible = true;
@@ -441,25 +557,134 @@ export default class GovernanceProposal extends Module {
     }
 
     private onSelectFirstToken(token: ITokenObject) {
-        this.form.firstTokenName = token.address;
-        this.validateStatus.firstTokenName = this.onValidateSelection('firstTokenName');
-        this.firstTokenNameSelection.classList.add('has-token');
+        this.form.firstToken = token;
+        this.validateStatus.firstToken = this.onValidateSelection('firstToken');
+        this.firstTokenSelection.classList.add('has-token');
     }
 
     private onSelectSecondToken(token: ITokenObject) {
-        this.form.secondTokenName = token.address;
-        this.validateStatus.secondTokenName = this.onValidateSelection('secondTokenName');
-        this.secondTokenNameSelection.classList.add('has-token');
+        this.form.secondToken = token;
+        this.validateStatus.secondToken = this.onValidateSelection('secondToken');
+        this.secondTokenSelection.classList.add('has-token');
     }
 
-    private onSelectDay(value: number | string, name: string) { }
+    private onSelectDay(value: number | string, name: string) {
+        if (this.form.hasOwnProperty(name))
+            this.form[name] = Number(value);
+        this.validateStatus[name] = this.onValidateInput(name);
+    }
 
-    private onChangedInput(source: Input, name: string) { }
+    private onChangedInput(source: Input, name: string) {
+        const value = (source as Input).value;
+        if (this.form.hasOwnProperty(name))
+            this.form[name] = value;
+        this.validateStatus[name] = this.onValidateInput(name);
+    }
+
+    private createExecutiveProposal = async () => {
+        this.btnConfirm.rightIcon.spin = true;
+        this.btnConfirm.rightIcon.visible = true;
+        let voteEndTime = Math.floor(Date.now() / 1000) + this.form.duration;
+        let exeCmd: string;
+        let exeParams1: any;
+        let exeParams2: any;
+
+        const fromToken = this.form.firstToken;
+        const toToken = this.form.secondToken;
+        let pair = nullAddress;
+        try {
+            pair = await getPair(this.state, fromToken, toToken);
+        } catch (error) {
+        }
+
+        if (pair === nullAddress) {
+            let tempVal = await getVotingValue(this.state, 'oracle');
+            this.minThreshold = tempVal.minOaxTokenToCreateVote;
+        } else {
+            let tempVal = await getVotingValue(this.state, 'vote');
+            this.minThreshold = tempVal.minOaxTokenToCreateVote;
+        }
+
+        exeParams1 = [fromToken, toToken];
+        exeParams2 = undefined;
+        exeCmd = 'oracle';
+        if (!exeCmd) {
+            this.showResultMessage('error', `Minimum ${this.minThreshold} stake required!`);
+            return;
+        }
+
+        try {
+            const delayInSeconds = this.form.delay;
+            this.showResultMessage('warning', 'Creating new Executive Proposal');
+
+            const { result, error } = await doNewVote(
+                this.state,
+                this.form.quorum,
+                this.form.threshold,
+                voteEndTime,
+                delayInSeconds,
+                exeCmd,
+                exeParams1,
+                exeParams2
+            );
+            if (error) {
+                this.showResultMessage('error', error);
+            } else if (result) {
+                this.showResultMessage('success', result);
+            }
+            this.btnConfirm.rightIcon.spin = false;
+            this.btnConfirm.rightIcon.visible = false;
+        } catch (err) {
+            console.log('newVote', err);
+            this.showResultMessage('error', '');
+            this.btnConfirm.rightIcon.spin = false;
+            this.btnConfirm.rightIcon.visible = false;
+        }
+    }
+
+    private getCheckingProps() {
+        const {
+            action,
+            duration,
+            quorum,
+            delay,
+            threshold,
+            firstToken,
+            secondToken,
+        } = this.validateStatus;
+        let result: any = {
+            action,
+            duration,
+            quorum,
+            delay,
+            threshold
+        };
+        return result = { ...result, firstToken, secondToken };
+    }
+
+    private onValidate() {
+        const validateKeys = Object.keys(this.getCheckingProps());
+        let hasValid = true;
+        for (let i = 0; i < validateKeys.length; i++) {
+            const key = validateKeys[i];
+            const isSelection = key === 'firstToken' || key === 'secondToken';
+            const result = isSelection ? this.onValidateSelection(key) : this.onValidateInput(key);
+            if (!result) hasValid = false;
+        }
+        return hasValid;
+    }
 
     private onConfirm() {
         if (!isClientWalletConnected() || !this.state.isRpcWalletConnected()) {
             this.connectWallet();
             return;
+        }
+        if (!this.isValidToCreateVote) {
+            const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
+            this.showResultMessage('error', `Minimum ${this.minThreshold} ${tokenSymbol} Required`)
+        } else {
+            if (!this.onValidate()) return;
+            this.createExecutiveProposal();
         }
     }
 
@@ -503,7 +728,7 @@ export default class GovernanceProposal extends Module {
                                             <i-label caption="Action" font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-combo-box
-                                            id="comboAction"
+                                            id="actionSelect"
                                             class="custom-combobox"
                                             height={32}
                                             minWidth={180}
@@ -515,7 +740,7 @@ export default class GovernanceProposal extends Module {
                                             onChanged={this.onChangeAction.bind(this)}
                                         ></i-combo-box>
                                         <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="lblActionErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                            <i-label id="actionErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-label font={{ size: '0.875rem' }} caption="Learn more about actions" margin={{ left: 'auto' }}></i-label>
                                         </i-hstack>
                                     </i-vstack>
@@ -529,9 +754,9 @@ export default class GovernanceProposal extends Module {
                                             <i-label caption='Select a pair' font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-hstack gap="1rem">
-                                            <i-vstack gap="0.5rem">
+                                            <i-vstack horizontalAlignment="start" gap="0.5rem">
                                                 <i-scom-token-input
-                                                    id="firstTokenNameSelection"
+                                                    id="firstTokenSelection"
                                                     class="custom-token-selection"
                                                     width="auto"
                                                     height={34}
@@ -541,11 +766,11 @@ export default class GovernanceProposal extends Module {
                                                     isInputShown={false}
                                                     onSelectToken={this.onSelectFirstToken.bind(this)}
                                                 ></i-scom-token-input>
-                                                <i-label id="firstTokenNameErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                                <i-label id="firstTokenErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             </i-vstack>
-                                            <i-vstack gap="0.5rem">
+                                            <i-vstack horizontalAlignment="start" gap="0.5rem">
                                                 <i-scom-token-input
-                                                    id="secondTokenNameSelection"
+                                                    id="secondTokenSelection"
                                                     class="custom-token-selection"
                                                     width="auto"
                                                     height={34}
@@ -555,7 +780,7 @@ export default class GovernanceProposal extends Module {
                                                     isInputShown={false}
                                                     onSelectToken={this.onSelectSecondToken.bind(this)}
                                                 ></i-scom-token-input>
-                                                <i-label id="secondTokenNameErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                                <i-label id="secondTokenErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             </i-vstack>
                                         </i-hstack>
                                     </i-vstack>
@@ -567,17 +792,17 @@ export default class GovernanceProposal extends Module {
                                             <i-label id="lblDuration" caption="Duration" font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-input
-                                            id="edtDuration"
+                                            id="durationInput"
                                             height={32}
                                             width="100%"
                                             inputType="number"
                                             margin={{ top: '1rem' }}
                                             border={{ bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }}
                                             value="0"
-                                            onChanged={(source: Input) => this.onSelectDay(source.value, 'dayValue')}
+                                            onChanged={(source: Input) => this.onSelectDay(source.value, 'duration')}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="lblDurationErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                            <i-label id="durationErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-label id="lblDurationNote"
                                                 margin={{ left: 'auto' }}
                                                 font={{ size: '0.875rem' }}
@@ -591,7 +816,7 @@ export default class GovernanceProposal extends Module {
                                             <i-label id="lblDelay" caption="Delay" font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-input
-                                            id="edtDelay"
+                                            id="delayInput"
                                             class='poll-input'
                                             height={32}
                                             width='100%'
@@ -602,7 +827,7 @@ export default class GovernanceProposal extends Module {
                                             onChanged={(source: Input) => this.onSelectDay(source.value, 'delay')}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="lblDelayErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                            <i-label id="delayErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-vstack margin={{ left: 'auto' }} class="text-right">
                                                 <i-label id="lblDelayMinNote" font={{ size: '0.875rem' }} caption="Minimum: 0 second" ></i-label>
                                                 <i-label id="lblDelayMaxNote" font={{ size: '0.875rem' }} caption="Maximum: 0 second" ></i-label>
@@ -617,7 +842,7 @@ export default class GovernanceProposal extends Module {
                                             <i-label caption="Quorum" font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-input
-                                            id="edtQuorum"
+                                            id="quorumInput"
                                             height={32}
                                             width="100%"
                                             inputType="number"
@@ -627,7 +852,7 @@ export default class GovernanceProposal extends Module {
                                             onChanged={(source: Input) => this.onChangedInput(source, 'quorum')}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="lblQuorumErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                            <i-label id="quorumErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-label id="lblQuorumNote"
                                                 font={{ size: '0.875rem' }}
                                                 caption="Minimum: 0 second"
@@ -641,7 +866,7 @@ export default class GovernanceProposal extends Module {
                                             <i-label caption="Threshold" font={{ size: '1rem', weight: 600 }}></i-label>
                                         </i-hstack>
                                         <i-input
-                                            id="edtThreshold"
+                                            id="thresholdInput"
                                             height={32}
                                             width="100%"
                                             inputType="number"
@@ -651,7 +876,7 @@ export default class GovernanceProposal extends Module {
                                             onChanged={(source: Input) => this.onChangedInput(source, 'threshold')}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="lblThresholdErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
+                                            <i-label id="thresholdErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-label font={{ size: '0.875rem' }} caption="Minimum: 50%" margin={{ left: 'auto' }}></i-label>
                                         </i-hstack>
                                     </i-vstack>

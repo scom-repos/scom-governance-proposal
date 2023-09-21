@@ -1,7 +1,7 @@
 import { application } from "@ijstech/components";
 import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
 import getNetworkList from "@scom/scom-network-list";
-import { ITokenObject } from "@scom/scom-token-list";
+import { ITokenObject, WETHByChainId } from "@scom/scom-token-list";
 import { coreAddress } from "./core";
 
 export class State {
@@ -112,4 +112,15 @@ export class State {
 export function isClientWalletConnected() {
   const wallet = Wallet.getClientInstance();
   return wallet.isConnected;
+}
+
+export const getWETH = (chainId: number): ITokenObject => {
+  let wrappedToken = WETHByChainId[chainId];
+  return wrappedToken;
+}
+
+export const isAddressValid = (address: string) => {
+  let wallet:any = Wallet.getClientInstance();
+  const isValid = wallet.web3.utils.isAddress(address);
+  return isValid;
 }
