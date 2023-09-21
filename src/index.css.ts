@@ -33,6 +33,23 @@ export default Styles.style({
             color: '#fff'
           }
         }
-      }
+      },
+      '.custom-token-selection #gridTokenInput': {
+        background: 'transparent',
+        padding: '0 !important',
+        $nest: {
+          '#btnToken': {
+            background: Theme.background.gradient,
+            color: '#fff !important'
+          },
+          '#btnToken i-label': {
+            color: Theme.text.third,
+            fontWeight: 700
+          }
+        }
+      },
+      '.custom-token-selection.has-token #gridTokenInput #btnToken': {
+        background: 'transparent'
+      },
     }
 });

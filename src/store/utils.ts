@@ -1,6 +1,7 @@
 import { application } from "@ijstech/components";
 import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
 import getNetworkList from "@scom/scom-network-list";
+import { ITokenObject } from "@scom/scom-token-list";
 import { coreAddress } from "./core";
 
 export class State {
@@ -94,6 +95,17 @@ export class State {
 
   getAddresses(chainId?: number) {
     return coreAddress[chainId || this.getChainId()];
+  }
+
+  getGovToken(chainId: number): ITokenObject {
+    let govToken;
+    let address = this.getAddresses(chainId).GOV_TOKEN;
+    if (chainId == 43113 || chainId == 43114 || chainId == 42161 || chainId == 421613 || chainId == 80001 || chainId == 137) {
+      govToken = { address: address, decimals: 18, symbol: "veOSWAP", name: 'Vote-escrowed OSWAP' };
+    }  else {
+      govToken = {address: address, decimals: 18, symbol: "OSWAP", name: 'OpenSwap'};
+    }
+    return govToken;
   }
 }
 
