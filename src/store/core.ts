@@ -55,4 +55,20 @@ export const coreAddress: { [chainId: number]: CoreAddress } = {
         OSWAP_VotingExecutor4: "0x646C5e3Ec40706372243accF2D457D9162553685",
         OSWAP_RestrictedOracle: "0x510a179AA399672e26e54Ed8Ce0e822cc9D0a98D",
     },
+    42161: { // Arbitrum Mainnet
+        OAXDEX_Governance: "0x5580B68478e714C02850251353Cc58B85D4033C3",
+        OAXDEX_VotingRegistry: "0x64062158A5Cc2aA3740B1035785F29153eA64677",
+        GOV_TOKEN: "0x29E65d6f3e7a609E0138a1331D42D23159124B8E",
+        OSWAP_RestrictedFactory: "0x408aAf94BD851eb991dA146dFc7C290aA42BA70f",
+        OSWAP_VotingExecutor4: "0x2d7BB250595db7D588D32A0f3582BB73CD902060",
+        OSWAP_RestrictedOracle: "0x9146C8Be06F6EA2a09aD0EA2320e823eC3e98df5",
+    },
+    421613: { //Arbitrum Goerli Testnet
+        OAXDEX_Governance: "0x6f460B0Bf633E22503Efa460429B0Ab32d655B9D",
+        OAXDEX_VotingRegistry: "0x3Eb8e7B7EbdcA63031504fe4C94b8e393D530Ec9",
+        GOV_TOKEN: "0x5580B68478e714C02850251353Cc58B85D4033C3",
+        OSWAP_RestrictedFactory: "0x6f641f4F5948954F7cd675f3D874Ac60b193bA0d",
+        OSWAP_VotingExecutor4: "0xe06a37e298733d418b3e5a36445877A0C657414F",
+        OSWAP_RestrictedOracle: "0x20700BC53b3B2259626FB0A51D1D3Ec7Ba63A4B3",
+    },
 }
