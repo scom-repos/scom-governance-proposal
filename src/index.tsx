@@ -679,18 +679,25 @@ export default class GovernanceProposal extends Module {
         this.validateStatus.secondToken = this.onValidateSelection('secondToken');
         this.secondTokenSelection.classList.add('has-token');
     }
-
-    private onSelectDay(value: number | string, name: string) {
-        if (this.form.hasOwnProperty(name))
-            this.form[name] = Number(value);
-        this.validateStatus[name] = this.onValidateInput(name);
+    
+    private onDurationChanged() {
+        this.form.duration = Number(this.durationInput.value);
+        this.validateStatus.duration = this.onValidateInput("duration");
     }
 
-    private onChangedInput(source: Input, name: string) {
-        const value = (source as Input).value;
-        if (this.form.hasOwnProperty(name))
-            this.form[name] = value;
-        this.validateStatus[name] = this.onValidateInput(name);
+    private onDelayChanged() {
+        this.form.delay = Number(this.delayInput.value);
+        this.validateStatus.delay = this.onValidateInput("delay");
+    }
+
+    private onQuorumChanged() {
+        this.form.quorum = Number(this.quorumInput.value);
+        this.validateStatus.quorum = this.onValidateInput("quorum");
+    }
+
+    private onThresholdChanged() {
+        this.form.threshold = Number(this.thresholdInput.value);
+        this.validateStatus.threshold = this.onValidateInput("threshold");
     }
 
     private createExecutiveProposal = async () => {
@@ -911,7 +918,7 @@ export default class GovernanceProposal extends Module {
                                             margin={{ top: '1rem' }}
                                             border={{ bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }}
                                             value="0"
-                                            onChanged={(source: Input) => this.onSelectDay(source.value, 'duration')}
+                                            onChanged={this.onDurationChanged.bind(this)}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="durationErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
@@ -936,7 +943,7 @@ export default class GovernanceProposal extends Module {
                                             margin={{ top: '1rem' }}
                                             border={{ bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }}
                                             value="0"
-                                            onChanged={(source: Input) => this.onSelectDay(source.value, 'delay')}
+                                            onChanged={this.onDelayChanged.bind(this)}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="delayErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
@@ -961,7 +968,7 @@ export default class GovernanceProposal extends Module {
                                             margin={{ top: '1rem' }}
                                             border={{ bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }}
                                             value="0"
-                                            onChanged={(source: Input) => this.onChangedInput(source, 'quorum')}
+                                            onChanged={this.onQuorumChanged.bind(this)}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="quorumErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
@@ -985,7 +992,7 @@ export default class GovernanceProposal extends Module {
                                             margin={{ top: '1rem' }}
                                             border={{ bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }}
                                             value="0"
-                                            onChanged={(source: Input) => this.onChangedInput(source, 'threshold')}
+                                            onChanged={this.onThresholdChanged.bind(this)}
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="thresholdErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>

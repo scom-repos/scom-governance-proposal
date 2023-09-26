@@ -1145,16 +1145,21 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this.validateStatus.secondToken = this.onValidateSelection('secondToken');
             this.secondTokenSelection.classList.add('has-token');
         }
-        onSelectDay(value, name) {
-            if (this.form.hasOwnProperty(name))
-                this.form[name] = Number(value);
-            this.validateStatus[name] = this.onValidateInput(name);
+        onDurationChanged() {
+            this.form.duration = Number(this.durationInput.value);
+            this.validateStatus.duration = this.onValidateInput("duration");
         }
-        onChangedInput(source, name) {
-            const value = source.value;
-            if (this.form.hasOwnProperty(name))
-                this.form[name] = value;
-            this.validateStatus[name] = this.onValidateInput(name);
+        onDelayChanged() {
+            this.form.delay = Number(this.delayInput.value);
+            this.validateStatus.delay = this.onValidateInput("delay");
+        }
+        onQuorumChanged() {
+            this.form.quorum = Number(this.quorumInput.value);
+            this.validateStatus.quorum = this.onValidateInput("quorum");
+        }
+        onThresholdChanged() {
+            this.form.threshold = Number(this.thresholdInput.value);
+            this.validateStatus.threshold = this.onValidateInput("threshold");
         }
         getCheckingProps() {
             const { action, duration, quorum, delay, threshold, firstToken, secondToken, } = this.validateStatus;
@@ -1235,7 +1240,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
                                             this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
                                             this.$render("i-label", { id: "lblDuration", caption: "Duration", font: { size: '1rem', weight: 600 } })),
-                                        this.$render("i-input", { id: "durationInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onSelectDay(source.value, 'duration') }),
+                                        this.$render("i-input", { id: "durationInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onDurationChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "durationErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
                                             this.$render("i-label", { id: "lblDurationNote", margin: { left: 'auto' }, font: { size: '0.875rem' }, caption: "Minimum: 0 second" }))),
@@ -1243,7 +1248,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
                                             this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
                                             this.$render("i-label", { id: "lblDelay", caption: "Delay", font: { size: '1rem', weight: 600 } })),
-                                        this.$render("i-input", { id: "delayInput", class: 'poll-input', height: 32, width: '100%', inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onSelectDay(source.value, 'delay') }),
+                                        this.$render("i-input", { id: "delayInput", class: 'poll-input', height: 32, width: '100%', inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onDelayChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "delayErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
                                             this.$render("i-vstack", { margin: { left: 'auto' }, class: "text-right" },
@@ -1254,7 +1259,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
                                             this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
                                             this.$render("i-label", { caption: "Quorum", font: { size: '1rem', weight: 600 } })),
-                                        this.$render("i-input", { id: "quorumInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onChangedInput(source, 'quorum') }),
+                                        this.$render("i-input", { id: "quorumInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onQuorumChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "quorumErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
                                             this.$render("i-label", { id: "lblQuorumNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second", margin: { left: 'auto' } }))),
@@ -1262,7 +1267,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
                                             this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
                                             this.$render("i-label", { caption: "Threshold", font: { size: '1rem', weight: 600 } })),
-                                        this.$render("i-input", { id: "thresholdInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: (source) => this.onChangedInput(source, 'threshold') }),
+                                        this.$render("i-input", { id: "thresholdInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onThresholdChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "thresholdErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
                                             this.$render("i-label", { font: { size: '0.875rem' }, caption: "Minimum: 50%", margin: { left: 'auto' } }))))),

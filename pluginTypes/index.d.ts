@@ -330,8 +330,10 @@ declare module "@scom/scom-governance-proposal" {
         private onValidateSelection;
         private onSelectFirstToken;
         private onSelectSecondToken;
-        private onSelectDay;
-        private onChangedInput;
+        private onDurationChanged;
+        private onDelayChanged;
+        private onQuorumChanged;
+        private onThresholdChanged;
         private createExecutiveProposal;
         private getCheckingProps;
         private onValidate;
