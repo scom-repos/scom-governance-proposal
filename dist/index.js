@@ -366,20 +366,25 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         return state.getGovToken(chainId).decimals || 18;
     }
     async function stakeOf(state, address) {
-        const wallet = state.getRpcWallet();
-        const chainId = state.getChainId();
-        const gov = state.getAddresses(chainId).OAXDEX_Governance;
-        const govContract = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, gov);
-        let result = await govContract.stakeOf(address);
-        result = eth_wallet_2.Utils.fromDecimals(result, govTokenDecimals(state));
+        let result = new eth_wallet_2.BigNumber(0);
+        try {
+            const wallet = state.getRpcWallet();
+            const chainId = state.getChainId();
+            const gov = state.getAddresses(chainId).OAXDEX_Governance;
+            const govContract = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, gov);
+            let stakeOf = await govContract.stakeOf(address);
+            result = eth_wallet_2.Utils.fromDecimals(stakeOf, govTokenDecimals(state));
+        }
+        catch (err) { }
         return result;
     }
     exports.stakeOf = stakeOf;
     async function getVotingValue(state, param1) {
+        var _a;
         let result = {};
         const wallet = state.getRpcWallet();
         const chainId = state.getChainId();
-        const address = state.getAddresses(chainId).OAXDEX_Governance;
+        const address = (_a = state.getAddresses(chainId)) === null || _a === void 0 ? void 0 : _a.OAXDEX_Governance;
         if (address) {
             const govContract = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, address);
             const params = await govContract.getVotingParams(eth_wallet_2.Utils.stringToBytes32(param1));
@@ -653,14 +658,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 const wallet = this.state.getRpcWallet();
                 const selectedAddress = wallet.account.address;
                 this.currentStake = (await (0, api_1.stakeOf)(this.state, selectedAddress)).toNumber();
-                const maxDur = paramValueObj.maxVoteDuration;
-                const minDur = paramValueObj.minVoteDuration;
                 const extraSecs = 60;
-                this.maxVoteDurationInDays = maxDur;
-                this.minVoteDurationInDays = minDur + extraSecs;
-                this.minQuorum = paramValueObj.minQuorum;
-                this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
-                this.minDelay = paramValueObj.minExeDelay;
+                this.maxVoteDurationInDays = paramValueObj.maxVoteDuration || 0;
+                this.minVoteDurationInDays = paramValueObj.minVoteDuration ? paramValueObj.minVoteDuration + extraSecs : 0;
+                this.minQuorum = paramValueObj.minQuorum || 0;
+                this.minThreshold = paramValueObj.minOaxTokenToCreateVote || 0;
+                this.minDelay = paramValueObj.minExeDelay || 0;
                 // set default value for form
                 this.form.duration = this.minVoteDurationInDays;
                 this.form.delay = this.minDelay;

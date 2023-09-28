@@ -500,14 +500,12 @@ export default class GovernanceProposal extends Module {
         const wallet = this.state.getRpcWallet();
         const selectedAddress = wallet.account.address;
         this.currentStake = (await stakeOf(this.state, selectedAddress)).toNumber();
-        const maxDur = paramValueObj.maxVoteDuration;
-        const minDur = paramValueObj.minVoteDuration;
         const extraSecs = 60;
-        this.maxVoteDurationInDays = maxDur;
-        this.minVoteDurationInDays = minDur + extraSecs;
-        this.minQuorum = paramValueObj.minQuorum;
-        this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
-        this.minDelay = paramValueObj.minExeDelay;
+        this.maxVoteDurationInDays = paramValueObj.maxVoteDuration || 0;
+        this.minVoteDurationInDays = paramValueObj.minVoteDuration ? paramValueObj.minVoteDuration + extraSecs : 0;
+        this.minQuorum = paramValueObj.minQuorum || 0;
+        this.minThreshold = paramValueObj.minOaxTokenToCreateVote || 0;
+        this.minDelay = paramValueObj.minExeDelay || 0;
         // set default value for form
         this.form.duration = this.minVoteDurationInDays;
         this.form.delay = this.minDelay;

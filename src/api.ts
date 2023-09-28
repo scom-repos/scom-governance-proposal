@@ -36,12 +36,15 @@ function govTokenDecimals(state: State) {
 }
 
 export async function stakeOf(state: State, address: string) {
-    const wallet = state.getRpcWallet();
-    const chainId = state.getChainId();
-    const gov = state.getAddresses(chainId).OAXDEX_Governance;
-    const govContract = new Contracts.OAXDEX_Governance(wallet, gov);
-    let result = await govContract.stakeOf(address);
-    result = Utils.fromDecimals(result, govTokenDecimals(state));
+    let result = new BigNumber(0);
+    try {
+        const wallet = state.getRpcWallet();
+        const chainId = state.getChainId();
+        const gov = state.getAddresses(chainId).OAXDEX_Governance;
+        const govContract = new Contracts.OAXDEX_Governance(wallet, gov);
+        let stakeOf = await govContract.stakeOf(address);
+        result = Utils.fromDecimals(stakeOf, govTokenDecimals(state));
+    } catch (err) {}
     return result;
 }
 
@@ -55,7 +58,7 @@ export async function getVotingValue(state: State, param1: any) {
     } = {};
     const wallet = state.getRpcWallet();
     const chainId = state.getChainId();
-    const address = state.getAddresses(chainId).OAXDEX_Governance;
+    const address = state.getAddresses(chainId)?.OAXDEX_Governance;
     if (address) {
         const govContract = new Contracts.OAXDEX_Governance(wallet, address);
         const params = await govContract.getVotingParams(Utils.stringToBytes32(param1) as string);
