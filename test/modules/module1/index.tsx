@@ -60,7 +60,7 @@ export default class Module1 extends Module {
             <i-panel>
                 <i-hstack id="mainStack" margin={{ top: '1rem', left: '1rem' }} gap="2rem">
                     <i-scom-governance-proposal
-                        width={600}
+                        width={1000}
                         defaultChainId={97}
                         networks={[
                             {

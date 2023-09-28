@@ -5,6 +5,7 @@ import {
     Control,
     ControlElement,
     customElements,
+    FormatUtils,
     IComboItem,
     Input,
     Label,
@@ -59,6 +60,7 @@ export default class GovernanceProposal extends Module {
     private loadingElm: Panel;
     private actionSelect: ComboBox;
     private actionErr: Label;
+    private lblMinVotingBalance: Label;
     private firstAddressStack: VStack;
     private actionStack: VStack;
     private tokenPairStack: VStack;
@@ -532,6 +534,8 @@ export default class GovernanceProposal extends Module {
                 this.btnConfirm.enabled = this.isValidToCreateVote;
                 this.btnConfirm.caption = !this.hasEnoughStake ? 'Insufficient Voting Balance' : 'Create Executive Proposal';
             }
+            const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
+            this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${FormatUtils.formatNumber(this.minThreshold, {decimalFigures:4})} ${tokenSymbol}`;
             this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
             this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
             this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
@@ -866,8 +870,9 @@ export default class GovernanceProposal extends Module {
                                         ></i-combo-box>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="actionErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
-                                            <i-label font={{ size: '0.875rem' }} caption="Learn more about actions" margin={{ left: 'auto' }}></i-label>
+                                            <i-label id="lblMinVotingBalance" font={{ size: '0.875rem' }} margin={{ left: 'auto' }}></i-label>
                                         </i-hstack>
+                                        <i-label font={{ size: '0.875rem' }} caption="Learn more about actions" margin={{ left: 'auto' }}></i-label>
                                     </i-vstack>
                                     <i-vstack id="systemStack" width="100%" gap="0.5rem" stack={{ grow: '1', shrink: '0', basis: '330px' }} visible={false}></i-vstack>
                                 </i-hstack>

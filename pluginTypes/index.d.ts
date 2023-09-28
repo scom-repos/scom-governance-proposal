@@ -217,6 +217,7 @@ declare module "@scom/scom-governance-proposal" {
         private loadingElm;
         private actionSelect;
         private actionErr;
+        private lblMinVotingBalance;
         private firstAddressStack;
         private actionStack;
         private tokenPairStack;

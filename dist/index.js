@@ -671,6 +671,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             };
             this.initializeWidgetConfig = async () => {
                 setTimeout(async () => {
+                    var _a;
                     const chainId = this.chainId;
                     scom_token_list_2.tokenStore.updateTokenMapData(chainId);
                     await this.initWallet();
@@ -685,6 +686,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         this.btnConfirm.enabled = this.isValidToCreateVote;
                         this.btnConfirm.caption = !this.hasEnoughStake ? 'Insufficient Voting Balance' : 'Create Executive Proposal';
                     }
+                    const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
+                    this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_4.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
                     this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
                     this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
@@ -1225,7 +1228,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-combo-box", { id: "actionSelect", class: "custom-combobox", height: 32, minWidth: 180, margin: { top: '1rem' }, border: { bottom: { width: '1px', style: 'solid', color: Theme.colors.primary.main } }, icon: { name: "angle-down", fill: Theme.text.third, width: 12, height: 12 }, font: { size: '0.875rem' }, items: actions, onChanged: this.onChangeAction.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "actionErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
-                                            this.$render("i-label", { font: { size: '0.875rem' }, caption: "Learn more about actions", margin: { left: 'auto' } }))),
+                                            this.$render("i-label", { id: "lblMinVotingBalance", font: { size: '0.875rem' }, margin: { left: 'auto' } })),
+                                        this.$render("i-label", { font: { size: '0.875rem' }, caption: "Learn more about actions", margin: { left: 'auto' } })),
                                     this.$render("i-vstack", { id: "systemStack", width: "100%", gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' }, visible: false })),
                                 this.$render("i-vstack", { id: "firstAddressStack", width: "100%", gap: "0.5rem", visible: false }),
                                 this.$render("i-vstack", { id: "actionStack" },
