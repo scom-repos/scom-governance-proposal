@@ -411,56 +411,52 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
     exports.getPair = getPair;
     async function doNewVote(state, quorum, threshold, voteEndTime, exeDelay, exeCmd, exeParams1, exeParams2) {
         let result;
-        try {
-            const wallet = eth_wallet_2.Wallet.getClientInstance();
-            const chainId = state.getChainId();
-            let param = {
-                executor: '',
-                name: '',
-                options: [eth_wallet_2.Utils.stringToBytes32('Y'), eth_wallet_2.Utils.stringToBytes32('N')],
-                quorum: new eth_wallet_2.BigNumber(quorum).shiftedBy(18),
-                threshold: new eth_wallet_2.BigNumber(threshold).shiftedBy(18 - 2),
-                voteEndTime,
-                executeDelay: exeDelay,
-                executeParam: []
-            };
-            const Addresses = state.getAddresses(chainId);
-            const WETH9 = (0, index_1.getWETH)(chainId);
-            // restrictedOracle
-            let executor = Executor4;
-            let factoryContract = new oswap_openswap_contract_1.Contracts.OSWAP_RestrictedFactory(wallet, Addresses.OSWAP_RestrictedFactory);
-            exeParams2 = Addresses.OSWAP_RestrictedOracle;
-            let tokens = exeParams1.map(e => (e === null || e === void 0 ? void 0 : e.address) ? e : WETH9);
-            let oldOracle = await factoryContract.oracles({ param1: tokens[0].address, param2: tokens[1].address });
-            let oracleName;
-            let existingOracle = await factoryContract.isOracle(exeParams2);
-            if (oldOracle == eth_wallet_2.Utils.nullAddress && existingOracle) {
-                exeCmd = "addOldOracleToNewPair";
-                oracleName = "addOrc_";
-            }
-            else {
-                exeCmd = "setOracle";
-                oracleName = "setOrc_";
-            }
-            let symbol1 = await new oswap_openswap_contract_1.Contracts.ERC20(wallet, tokens[0].address).symbol();
-            let symbol2 = await new oswap_openswap_contract_1.Contracts.ERC20(wallet, tokens[1].address).symbol();
-            oracleName = oracleName + symbol1 + "/" + symbol2 + "_" + exeParams2.substring(2);
-            param.executor = Addresses[executor];
-            param.name = eth_wallet_2.Utils.stringToBytes32(oracleName.substring(0, 32));
-            if (new eth_wallet_2.BigNumber(tokens[0].address.toLowerCase()).lt(tokens[1].address.toLowerCase()))
-                param.executeParam = [eth_wallet_2.Utils.stringToBytes32(exeCmd), eth_wallet_2.Utils.addressToBytes32Right(tokens[0].address, true), eth_wallet_2.Utils.addressToBytes32Right(tokens[1].address, true), eth_wallet_2.Utils.addressToBytes32Right(exeParams2, true)];
-            else
-                param.executeParam = [eth_wallet_2.Utils.stringToBytes32(exeCmd), eth_wallet_2.Utils.addressToBytes32Right(tokens[1].address, true), eth_wallet_2.Utils.addressToBytes32Right(tokens[0].address, true), eth_wallet_2.Utils.addressToBytes32Right(exeParams2, true)];
-            const votingRegistry = new oswap_openswap_contract_1.Contracts.OAXDEX_VotingRegistry(wallet, Addresses.OAXDEX_VotingRegistry);
-            let receipt = await votingRegistry.newVote(param);
-            const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet);
-            let event = governance.parseNewVoteEvent(receipt)[0];
-            result = (event === null || event === void 0 ? void 0 : event.vote) || '';
+        const wallet = eth_wallet_2.Wallet.getClientInstance();
+        const chainId = state.getChainId();
+        let param = {
+            executor: '',
+            name: '',
+            options: [eth_wallet_2.Utils.stringToBytes32('Y'), eth_wallet_2.Utils.stringToBytes32('N')],
+            quorum: new eth_wallet_2.BigNumber(quorum).shiftedBy(18),
+            threshold: new eth_wallet_2.BigNumber(threshold).shiftedBy(18 - 2),
+            voteEndTime,
+            executeDelay: exeDelay,
+            executeParam: []
+        };
+        const Addresses = state.getAddresses(chainId);
+        const WETH9 = (0, index_1.getWETH)(chainId);
+        // restrictedOracle
+        let executor = Executor4;
+        let factoryContract = new oswap_openswap_contract_1.Contracts.OSWAP_RestrictedFactory(wallet, Addresses.OSWAP_RestrictedFactory);
+        exeParams2 = Addresses.OSWAP_RestrictedOracle;
+        let tokens = exeParams1.map(e => (e === null || e === void 0 ? void 0 : e.address) ? e : WETH9);
+        let oldOracle = await factoryContract.oracles({ param1: tokens[0].address, param2: tokens[1].address });
+        let oracleName;
+        let existingOracle = await factoryContract.isOracle(exeParams2);
+        if (oldOracle == eth_wallet_2.Utils.nullAddress && existingOracle) {
+            exeCmd = "addOldOracleToNewPair";
+            oracleName = "addOrc_";
         }
-        catch (error) {
-            return { result: null, error: error };
+        else {
+            exeCmd = "setOracle";
+            oracleName = "setOrc_";
         }
-        return { result, error: null };
+        let symbol1 = await new oswap_openswap_contract_1.Contracts.ERC20(wallet, tokens[0].address).symbol();
+        let symbol2 = await new oswap_openswap_contract_1.Contracts.ERC20(wallet, tokens[1].address).symbol();
+        oracleName = oracleName + symbol1 + "/" + symbol2 + "_" + exeParams2.substring(2);
+        param.executor = Addresses[executor];
+        param.name = eth_wallet_2.Utils.stringToBytes32(oracleName.substring(0, 32));
+        if (new eth_wallet_2.BigNumber(tokens[0].address.toLowerCase()).lt(tokens[1].address.toLowerCase()))
+            param.executeParam = [eth_wallet_2.Utils.stringToBytes32(exeCmd), eth_wallet_2.Utils.addressToBytes32Right(tokens[0].address, true), eth_wallet_2.Utils.addressToBytes32Right(tokens[1].address, true), eth_wallet_2.Utils.addressToBytes32Right(exeParams2, true)];
+        else
+            param.executeParam = [eth_wallet_2.Utils.stringToBytes32(exeCmd), eth_wallet_2.Utils.addressToBytes32Right(tokens[1].address, true), eth_wallet_2.Utils.addressToBytes32Right(tokens[0].address, true), eth_wallet_2.Utils.addressToBytes32Right(exeParams2, true)];
+        const votingRegistry = new oswap_openswap_contract_1.Contracts.OAXDEX_VotingRegistry(wallet, Addresses.OAXDEX_VotingRegistry);
+        let receipt = await votingRegistry.newVote(param);
+        const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, Addresses.OAXDEX_Governance);
+        let event = governance.parseNewVoteEvent(receipt)[0];
+        result = (event === null || event === void 0 ? void 0 : event.vote) || '';
+        console.log(result);
+        return result;
     }
     exports.doNewVote = doNewVote;
 });
@@ -758,26 +754,32 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 exeParams1 = [fromToken, toToken];
                 exeParams2 = undefined;
                 exeCmd = 'oracle';
-                if (!exeCmd) {
-                    this.showResultMessage('error', `Minimum ${this.minThreshold} stake required!`);
-                    return;
-                }
                 try {
                     const delayInSeconds = this.form.delay;
                     this.showResultMessage('warning', 'Creating new Executive Proposal');
-                    const { result, error } = await (0, api_1.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
-                    if (error) {
-                        this.showResultMessage('error', error);
-                    }
-                    else if (result) {
-                        this.showResultMessage('success', result);
-                    }
-                    this.btnConfirm.rightIcon.spin = false;
-                    this.btnConfirm.rightIcon.visible = false;
+                    const txHashCallback = async (err, receipt) => {
+                        if (err) {
+                            this.showResultMessage('error', err);
+                        }
+                        else if (receipt) {
+                            this.showResultMessage('success', receipt);
+                        }
+                    };
+                    const confirmationCallback = async (receipt) => {
+                    };
+                    const wallet = eth_wallet_3.Wallet.getClientInstance();
+                    wallet.registerSendTxEvents({
+                        transactionHash: txHashCallback,
+                        confirmation: confirmationCallback
+                    });
+                    let result = await (0, api_1.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
+                    console.log(result);
                 }
                 catch (err) {
                     console.log('newVote', err);
                     this.showResultMessage('error', '');
+                }
+                finally {
                     this.btnConfirm.rightIcon.spin = false;
                     this.btnConfirm.rightIcon.visible = false;
                 }

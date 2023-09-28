@@ -145,10 +145,7 @@ declare module "@scom/scom-governance-proposal/api.ts" {
         minQuorum?: number;
     }>;
     export function getPair(state: State, tokenA: ITokenObject, tokenB: ITokenObject): Promise<string>;
-    export function doNewVote(state: State, quorum: number, threshold: number, voteEndTime: number, exeDelay: number, exeCmd: string, exeParams1: any, exeParams2: any): Promise<{
-        result: string;
-        error: Error;
-    }>;
+    export function doNewVote(state: State, quorum: number, threshold: number, voteEndTime: number, exeDelay: number, exeCmd: string, exeParams1: any, exeParams2: any): Promise<string>;
 }
 /// <amd-module name="@scom/scom-governance-proposal/formSchema.ts" />
 declare module "@scom/scom-governance-proposal/formSchema.ts" {

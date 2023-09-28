@@ -725,16 +725,29 @@ export default class GovernanceProposal extends Module {
         exeParams1 = [fromToken, toToken];
         exeParams2 = undefined;
         exeCmd = 'oracle';
-        if (!exeCmd) {
-            this.showResultMessage('error', `Minimum ${this.minThreshold} stake required!`);
-            return;
-        }
 
         try {
             const delayInSeconds = this.form.delay;
             this.showResultMessage('warning', 'Creating new Executive Proposal');
 
-            const { result, error } = await doNewVote(
+            const txHashCallback = async (err: Error, receipt?: string) => {
+                if (err) {
+                    this.showResultMessage('error', err);
+                } else if (receipt) {
+                    this.showResultMessage('success', receipt);
+                }
+            }
+    
+            const confirmationCallback = async (receipt: any) => {
+            };
+    
+            const wallet = Wallet.getClientInstance();
+            wallet.registerSendTxEvents({
+                transactionHash: txHashCallback,
+                confirmation: confirmationCallback
+            });
+
+            let result = await doNewVote(
                 this.state,
                 this.form.quorum,
                 this.form.threshold,
@@ -744,16 +757,11 @@ export default class GovernanceProposal extends Module {
                 exeParams1,
                 exeParams2
             );
-            if (error) {
-                this.showResultMessage('error', error);
-            } else if (result) {
-                this.showResultMessage('success', result);
-            }
-            this.btnConfirm.rightIcon.spin = false;
-            this.btnConfirm.rightIcon.visible = false;
+            console.log(result);
         } catch (err) {
             console.log('newVote', err);
             this.showResultMessage('error', '');
+        } finally { 
             this.btnConfirm.rightIcon.spin = false;
             this.btnConfirm.rightIcon.visible = false;
         }

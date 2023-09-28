@@ -91,58 +91,52 @@ export async function doNewVote(
     exeCmd: string,
     exeParams1: any,
     exeParams2: any
-): Promise<{
-    result: string;
-    error: Error;
-}> {
+) {
     let result: string;
-    try {
-        const wallet: any = Wallet.getClientInstance();
-        const chainId = state.getChainId();
-        let param = {
-            executor: '',
-            name: '',
-            options: [Utils.stringToBytes32('Y') as string, Utils.stringToBytes32('N') as string],
-            quorum: new BigNumber(quorum).shiftedBy(18),
-            threshold: new BigNumber(threshold).shiftedBy(18 - 2),
-            voteEndTime,
-            executeDelay: exeDelay,
-            executeParam: []
-        };
-        const Addresses = state.getAddresses(chainId);
-        const WETH9 = getWETH(chainId);
-        // restrictedOracle
-        let executor: string = Executor4;
-        let factoryContract = new Contracts.OSWAP_RestrictedFactory(wallet, Addresses.OSWAP_RestrictedFactory);
-        exeParams2 = Addresses.OSWAP_RestrictedOracle;
-        let tokens = exeParams1.map(e => e?.address ? e : WETH9);
-        let oldOracle = await factoryContract.oracles({ param1: tokens[0].address, param2: tokens[1].address });
-        let oracleName: string;
+    const wallet: any = Wallet.getClientInstance();
+    const chainId = state.getChainId();
+    let param = {
+        executor: '',
+        name: '',
+        options: [Utils.stringToBytes32('Y') as string, Utils.stringToBytes32('N') as string],
+        quorum: new BigNumber(quorum).shiftedBy(18),
+        threshold: new BigNumber(threshold).shiftedBy(18 - 2),
+        voteEndTime,
+        executeDelay: exeDelay,
+        executeParam: []
+    };
+    const Addresses = state.getAddresses(chainId);
+    const WETH9 = getWETH(chainId);
+    // restrictedOracle
+    let executor: string = Executor4;
+    let factoryContract = new Contracts.OSWAP_RestrictedFactory(wallet, Addresses.OSWAP_RestrictedFactory);
+    exeParams2 = Addresses.OSWAP_RestrictedOracle;
+    let tokens = exeParams1.map(e => e?.address ? e : WETH9);
+    let oldOracle = await factoryContract.oracles({ param1: tokens[0].address, param2: tokens[1].address });
+    let oracleName: string;
 
-        let existingOracle = await factoryContract.isOracle(exeParams2);
-        if (oldOracle == Utils.nullAddress && existingOracle) {
-            exeCmd = "addOldOracleToNewPair";
-            oracleName = "addOrc_";
-        } else {
-            exeCmd = "setOracle";
-            oracleName = "setOrc_";
-        }
-        let symbol1 = await new Contracts.ERC20(wallet, tokens[0].address).symbol();
-        let symbol2 = await new Contracts.ERC20(wallet, tokens[1].address).symbol();
-        oracleName = oracleName + symbol1 + "/" + symbol2 + "_" + exeParams2.substring(2);
-        param.executor = Addresses[executor];
-        param.name = Utils.stringToBytes32(oracleName.substring(0, 32)) as string;
-        if (new BigNumber(tokens[0].address.toLowerCase()).lt(tokens[1].address.toLowerCase()))
-            param.executeParam = [Utils.stringToBytes32(exeCmd), Utils.addressToBytes32Right(tokens[0].address, true), Utils.addressToBytes32Right(tokens[1].address, true), Utils.addressToBytes32Right(exeParams2, true)];
-        else
-            param.executeParam = [Utils.stringToBytes32(exeCmd), Utils.addressToBytes32Right(tokens[1].address, true), Utils.addressToBytes32Right(tokens[0].address, true), Utils.addressToBytes32Right(exeParams2, true)];
-        const votingRegistry = new Contracts.OAXDEX_VotingRegistry(wallet, Addresses.OAXDEX_VotingRegistry);
-        let receipt = await votingRegistry.newVote(param);
-        const governance = new Contracts.OAXDEX_Governance(wallet);
-        let event = governance.parseNewVoteEvent(receipt)[0];
-        result = event?.vote || '';
-    } catch (error) {
-        return { result: null, error: error as any };
+    let existingOracle = await factoryContract.isOracle(exeParams2);
+    if (oldOracle == Utils.nullAddress && existingOracle) {
+        exeCmd = "addOldOracleToNewPair";
+        oracleName = "addOrc_";
+    } else {
+        exeCmd = "setOracle";
+        oracleName = "setOrc_";
     }
-    return { result, error: null };
+    let symbol1 = await new Contracts.ERC20(wallet, tokens[0].address).symbol();
+    let symbol2 = await new Contracts.ERC20(wallet, tokens[1].address).symbol();
+    oracleName = oracleName + symbol1 + "/" + symbol2 + "_" + exeParams2.substring(2);
+    param.executor = Addresses[executor];
+    param.name = Utils.stringToBytes32(oracleName.substring(0, 32)) as string;
+    if (new BigNumber(tokens[0].address.toLowerCase()).lt(tokens[1].address.toLowerCase()))
+        param.executeParam = [Utils.stringToBytes32(exeCmd), Utils.addressToBytes32Right(tokens[0].address, true), Utils.addressToBytes32Right(tokens[1].address, true), Utils.addressToBytes32Right(exeParams2, true)];
+    else
+        param.executeParam = [Utils.stringToBytes32(exeCmd), Utils.addressToBytes32Right(tokens[1].address, true), Utils.addressToBytes32Right(tokens[0].address, true), Utils.addressToBytes32Right(exeParams2, true)];
+    const votingRegistry = new Contracts.OAXDEX_VotingRegistry(wallet, Addresses.OAXDEX_VotingRegistry);
+    let receipt = await votingRegistry.newVote(param);
+    const governance = new Contracts.OAXDEX_Governance(wallet, Addresses.OAXDEX_Governance);
+    let event = governance.parseNewVoteEvent(receipt)[0];
+    result = event?.vote || '';
+    console.log(result)
+    return result;
 }
