@@ -469,9 +469,10 @@ export default class GovernanceProposal extends Module {
         const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
             this.refreshUI();
         });
-        if (rpcWallet.instanceId) {
-            if (this.firstTokenSelection) this.firstTokenSelection.rpcWalletId = rpcWallet.instanceId;
-            if (this.secondTokenSelection) this.secondTokenSelection.rpcWalletId = rpcWallet.instanceId;
+        const chainId = rpcWallet?.chainId;
+        if (chainId) {
+            if (this.firstTokenSelection) this.firstTokenSelection.chainId = chainId;
+            if (this.secondTokenSelection) this.secondTokenSelection.chainId = chainId;
         }
         const data: any = {
             defaultChainId: this.defaultChainId,

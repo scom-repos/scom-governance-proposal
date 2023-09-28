@@ -1033,11 +1033,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_3.Constants.RpcWalletEvent.Connected, async (connected) => {
                 this.refreshUI();
             });
-            if (rpcWallet.instanceId) {
+            const chainId = rpcWallet === null || rpcWallet === void 0 ? void 0 : rpcWallet.chainId;
+            if (chainId) {
                 if (this.firstTokenSelection)
-                    this.firstTokenSelection.rpcWalletId = rpcWallet.instanceId;
+                    this.firstTokenSelection.chainId = chainId;
                 if (this.secondTokenSelection)
-                    this.secondTokenSelection.rpcWalletId = rpcWallet.instanceId;
+                    this.secondTokenSelection.chainId = chainId;
             }
             const data = {
                 defaultChainId: this.defaultChainId,
