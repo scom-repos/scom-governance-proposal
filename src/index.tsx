@@ -872,7 +872,6 @@ export default class GovernanceProposal extends Module {
                                             <i-label id="actionErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             <i-label id="lblMinVotingBalance" font={{ size: '0.875rem' }} margin={{ left: 'auto' }}></i-label>
                                         </i-hstack>
-                                        <i-label font={{ size: '0.875rem' }} caption="Learn more about actions" margin={{ left: 'auto' }}></i-label>
                                     </i-vstack>
                                     <i-vstack id="systemStack" width="100%" gap="0.5rem" stack={{ grow: '1', shrink: '0', basis: '330px' }} visible={false}></i-vstack>
                                 </i-hstack>
