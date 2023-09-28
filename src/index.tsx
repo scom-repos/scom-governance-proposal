@@ -469,11 +469,6 @@ export default class GovernanceProposal extends Module {
         const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
             this.refreshUI();
         });
-        const chainId = rpcWallet?.chainId;
-        if (chainId) {
-            if (this.firstTokenSelection) this.firstTokenSelection.chainId = chainId;
-            if (this.secondTokenSelection) this.secondTokenSelection.chainId = chainId;
-        }
         const data: any = {
             defaultChainId: this.defaultChainId,
             wallets: this.wallets,
@@ -535,6 +530,8 @@ export default class GovernanceProposal extends Module {
                 this.btnConfirm.enabled = this.isValidToCreateVote;
                 this.btnConfirm.caption = !this.hasEnoughStake ? 'Insufficient Voting Balance' : 'Create Executive Proposal';
             }
+            this.firstTokenSelection.chainId = chainId;
+            this.secondTokenSelection.chainId = chainId;
             const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
             this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${FormatUtils.formatNumber(this.minThreshold, {decimalFigures:4})} ${tokenSymbol}`;
             this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;

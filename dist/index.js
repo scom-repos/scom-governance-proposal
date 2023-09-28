@@ -686,6 +686,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         this.btnConfirm.enabled = this.isValidToCreateVote;
                         this.btnConfirm.caption = !this.hasEnoughStake ? 'Insufficient Voting Balance' : 'Create Executive Proposal';
                     }
+                    this.firstTokenSelection.chainId = chainId;
+                    this.secondTokenSelection.chainId = chainId;
                     const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
                     this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_4.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
@@ -1033,13 +1035,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_3.Constants.RpcWalletEvent.Connected, async (connected) => {
                 this.refreshUI();
             });
-            const chainId = rpcWallet === null || rpcWallet === void 0 ? void 0 : rpcWallet.chainId;
-            if (chainId) {
-                if (this.firstTokenSelection)
-                    this.firstTokenSelection.chainId = chainId;
-                if (this.secondTokenSelection)
-                    this.secondTokenSelection.chainId = chainId;
-            }
             const data = {
                 defaultChainId: this.defaultChainId,
                 wallets: this.wallets,
