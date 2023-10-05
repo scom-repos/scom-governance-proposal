@@ -28,6 +28,7 @@ import customStyles from './index.css';
 import { doNewVote, getPair, getVotingValue, stakeOf } from "./api";
 import { ITokenObject, tokenStore } from "@scom/scom-token-list";
 import formSchema from './formSchema';
+import ScomGovernanceProposalFlowInitialSetup from "./flow/initialSetup";
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -1033,5 +1034,36 @@ export default class GovernanceProposal extends Module {
                 </i-panel>
             </i-scom-dapp-container>
         )
+    }
+    
+    async handleFlowStage(target: Control, stage: string, options: any) {
+        let widget;
+        if (stage === 'initialSetup') {
+            widget = new ScomGovernanceProposalFlowInitialSetup();
+            target.appendChild(widget);
+            await widget.ready();
+            let properties = options.properties;
+            let tokenRequirements = options.tokenRequirements;
+            let invokerId = options.invokerId;
+            await widget.setData({
+                executionProperties: properties,
+                tokenRequirements,
+                invokerId
+            });
+        } else {
+            widget = this;
+            target.appendChild(widget);
+            await widget.ready();
+			let properties = options.properties;
+			let tag = options.tag;
+			let invokerId = options.invokerId;
+			this.state.setFlowInvokerId(invokerId);
+			await this.setData(properties);
+			if (tag) {
+				this.setTag(tag);
+			}
+        }
+
+        return { widget };
     }
 } 

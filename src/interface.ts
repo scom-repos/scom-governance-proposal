@@ -15,6 +15,7 @@ export interface IGovernanceProposal {
     networks: INetworkConfig[];
     defaultChainId?: number;
     showHeader?: boolean;
+    action?: string;
 }
 
 export interface IValidateStatus {

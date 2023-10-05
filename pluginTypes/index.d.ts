@@ -83,8 +83,10 @@ declare module "@scom/scom-governance-proposal/store/utils.ts" {
         };
         rpcWalletId: string;
         approvalModel: ERC20ApprovalModel;
+        flowInvokerId: string;
         constructor(options: any);
         private initData;
+        setFlowInvokerId(id: string): void;
         initRpcWallet(defaultChainId: number): string;
         getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
         isRpcWalletConnected(): boolean;
@@ -192,9 +194,48 @@ declare module "@scom/scom-governance-proposal/formSchema.ts" {
     };
     export default _default_3;
 }
+/// <amd-module name="@scom/scom-governance-proposal/flow/initialSetup.tsx" />
+declare module "@scom/scom-governance-proposal/flow/initialSetup.tsx" {
+    import { Container, ControlElement, Module } from "@ijstech/components";
+    interface ScomGovernanceProposalFlowInitialSetupElement extends ControlElement {
+        data?: any;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-governance-proposal-flow-initial-setup']: ScomGovernanceProposalFlowInitialSetupElement;
+            }
+        }
+    }
+    export default class ScomGovernanceProposalFlowInitialSetup extends Module {
+        private lblConnectedStatus;
+        private btnConnectWallet;
+        private mdWallet;
+        private state;
+        private tokenRequirements;
+        private executionProperties;
+        private invokerId;
+        private $eventBus;
+        private walletEvents;
+        constructor(parent?: Container, options?: ControlElement);
+        private get rpcWallet();
+        private get chainId();
+        private resetRpcWallet;
+        setData(value: any): Promise<void>;
+        private initWallet;
+        private initializeWidgetConfig;
+        connectWallet(): Promise<void>;
+        private updateConnectStatus;
+        private registerEvents;
+        onHide(): void;
+        init(): void;
+        handleClickStart(): Promise<void>;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-governance-proposal" />
 declare module "@scom/scom-governance-proposal" {
-    import { ControlElement, Module } from "@ijstech/components";
+    import { Control, ControlElement, Module } from "@ijstech/components";
     import { INetworkConfig } from "@scom/scom-network-picker";
     import { IWalletPlugin } from "@scom/scom-wallet-modal";
     import { IGovernanceProposal } from "@scom/scom-governance-proposal/interface.ts";
@@ -337,5 +378,8 @@ declare module "@scom/scom-governance-proposal" {
         private onValidate;
         private onConfirm;
         render(): any;
+        handleFlowStage(target: Control, stage: string, options: any): Promise<{
+            widget: any;
+        }>;
     }
 }

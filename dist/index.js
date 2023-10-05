@@ -135,6 +135,9 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
                 this.setNetworkList(options.networks, options.infuraId);
             }
         }
+        setFlowInvokerId(id) {
+            this.flowInvokerId = id;
+        }
         initRpcWallet(defaultChainId) {
             var _a, _b, _c;
             if (this.rpcWalletId) {
@@ -521,17 +524,112 @@ define("@scom/scom-governance-proposal/formSchema.ts", ["require", "exports", "@
         }
     };
 });
-define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts"], function (require, exports, components_4, assets_1, index_2, data_json_1, eth_wallet_3, index_css_1, api_1, scom_token_list_2, formSchema_1) {
+define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/store/index.ts", "@ijstech/eth-wallet"], function (require, exports, components_4, index_2, eth_wallet_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_4.Styles.Theme.ThemeVars;
+    let ScomGovernanceProposalFlowInitialSetup = class ScomGovernanceProposalFlowInitialSetup extends components_4.Module {
+        constructor(parent, options) {
+            super(parent, options);
+            this.walletEvents = [];
+            this.state = new index_2.State({});
+            this.$eventBus = components_4.application.EventBus;
+        }
+        get rpcWallet() {
+            return this.state.getRpcWallet();
+        }
+        get chainId() {
+            return this.executionProperties.chainId || this.executionProperties.defaultChainId;
+        }
+        async resetRpcWallet() {
+            await this.state.initRpcWallet(this.chainId);
+        }
+        async setData(value) {
+            this.executionProperties = value.executionProperties;
+            this.tokenRequirements = value.tokenRequirements;
+            this.invokerId = value.invokerId;
+            await this.resetRpcWallet();
+            await this.initializeWidgetConfig();
+        }
+        async initWallet() {
+            try {
+                const rpcWallet = this.rpcWallet;
+                await rpcWallet.init();
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
+        async initializeWidgetConfig() {
+            const connected = (0, index_2.isClientWalletConnected)();
+            this.updateConnectStatus(connected);
+            await this.initWallet();
+        }
+        async connectWallet() {
+            if (!(0, index_2.isClientWalletConnected)()) {
+                if (this.mdWallet) {
+                    await components_4.application.loadPackage('@scom/scom-wallet-modal', '*');
+                    this.mdWallet.networks = this.executionProperties.networks;
+                    this.mdWallet.wallets = this.executionProperties.wallets;
+                    this.mdWallet.showModal();
+                }
+            }
+        }
+        updateConnectStatus(connected) {
+            if (connected) {
+                this.lblConnectedStatus.caption = 'Connected with ' + eth_wallet_3.Wallet.getClientInstance().address;
+                this.btnConnectWallet.visible = false;
+            }
+            else {
+                this.lblConnectedStatus.caption = 'Please connect your wallet first';
+                this.btnConnectWallet.visible = true;
+            }
+        }
+        registerEvents() {
+            let clientWallet = eth_wallet_3.Wallet.getClientInstance();
+            this.walletEvents.push(clientWallet.registerWalletEvent(this, eth_wallet_3.Constants.ClientWalletEvent.AccountsChanged, async (payload) => {
+                const { account } = payload;
+                let connected = !!account;
+                this.updateConnectStatus(connected);
+            }));
+        }
+        onHide() {
+            let clientWallet = eth_wallet_3.Wallet.getClientInstance();
+            for (let event of this.walletEvents) {
+                clientWallet.unregisterWalletEvent(event);
+            }
+            this.walletEvents = [];
+        }
+        init() {
+            super.init();
+            this.registerEvents();
+        }
+        async handleClickStart() { }
+        render() {
+            return (this.$render("i-vstack", { gap: "1rem", padding: { top: 10, bottom: 10, left: 20, right: 20 } },
+                this.$render("i-label", { caption: "Get Ready to Create Executive Proposal" }),
+                this.$render("i-vstack", { gap: "1rem" },
+                    this.$render("i-label", { id: "lblConnectedStatus" }),
+                    this.$render("i-hstack", null,
+                        this.$render("i-button", { id: "btnConnectWallet", caption: "Connect Wallet", font: { color: Theme.colors.primary.contrastText }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }, onClick: this.connectWallet.bind(this) })))));
+        }
+    };
+    ScomGovernanceProposalFlowInitialSetup = __decorate([
+        (0, components_4.customElements)('i-scom-governance-proposal-flow-initial-setup')
+    ], ScomGovernanceProposalFlowInitialSetup);
+    exports.default = ScomGovernanceProposalFlowInitialSetup;
+});
+define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts", "@scom/scom-governance-proposal/flow/initialSetup.tsx"], function (require, exports, components_5, assets_1, index_3, data_json_1, eth_wallet_4, index_css_1, api_1, scom_token_list_2, formSchema_1, initialSetup_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const Theme = components_5.Styles.Theme.ThemeVars;
     const actions = [
         {
             label: 'Modify Restricted Oracle',
             value: 'restrictedOracle'
         }
     ];
-    let GovernanceProposal = class GovernanceProposal extends components_4.Module {
+    let GovernanceProposal = class GovernanceProposal extends components_5.Module {
         constructor() {
             super(...arguments);
             this._data = {
@@ -594,7 +692,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         message: `Please input Address`
                     },
                     {
-                        validator: async (value) => (0, index_2.isAddressValid)(value),
+                        validator: async (value) => (0, index_3.isAddressValid)(value),
                         message: `Please enter valid Address`
                     },
                 ],
@@ -641,7 +739,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             };
             this.initWallet = async () => {
                 try {
-                    await eth_wallet_3.Wallet.getClientInstance().init();
+                    await eth_wallet_4.Wallet.getClientInstance().init();
                     const rpcWallet = this.state.getRpcWallet();
                     await rpcWallet.init();
                 }
@@ -677,7 +775,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     await this.initWallet();
                     await this.getGovParamValue();
                     this.updateBalance();
-                    const connected = (0, index_2.isClientWalletConnected)();
+                    const connected = (0, index_3.isClientWalletConnected)();
                     if (!connected || !this.state.isRpcWalletConnected()) {
                         this.btnConfirm.caption = connected ? "Switch Network" : "Connect Wallet";
                         this.btnConfirm.enabled = true;
@@ -689,7 +787,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.firstTokenSelection.chainId = chainId;
                     this.secondTokenSelection.chainId = chainId;
                     const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
-                    this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_4.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
+                    this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_5.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
                     this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
                     this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
@@ -719,9 +817,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 this.txStatusModal.showModal();
             };
             this.connectWallet = async () => {
-                if (!(0, index_2.isClientWalletConnected)()) {
+                if (!(0, index_3.isClientWalletConnected)()) {
                     if (this.mdWallet) {
-                        await components_4.application.loadPackage('@scom/scom-wallet-modal', '*');
+                        await components_5.application.loadPackage('@scom/scom-wallet-modal', '*');
                         this.mdWallet.networks = this.networks;
                         this.mdWallet.wallets = this.wallets;
                         this.mdWallet.showModal();
@@ -729,7 +827,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     return;
                 }
                 if (!this.state.isRpcWalletConnected()) {
-                    const clientWallet = eth_wallet_3.Wallet.getClientInstance();
+                    const clientWallet = eth_wallet_4.Wallet.getClientInstance();
                     await clientWallet.switchNetwork(this.chainId);
                 }
             };
@@ -742,13 +840,13 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 let exeParams2;
                 const fromToken = this.form.firstToken;
                 const toToken = this.form.secondToken;
-                let pair = index_2.nullAddress;
+                let pair = index_3.nullAddress;
                 try {
                     pair = await (0, api_1.getPair)(this.state, fromToken, toToken);
                 }
                 catch (error) {
                 }
-                if (pair === index_2.nullAddress) {
+                if (pair === index_3.nullAddress) {
                     let tempVal = await (0, api_1.getVotingValue)(this.state, 'oracle');
                     this.minThreshold = tempVal.minOaxTokenToCreateVote;
                 }
@@ -772,7 +870,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     };
                     const confirmationCallback = async (receipt) => {
                     };
-                    const wallet = eth_wallet_3.Wallet.getClientInstance();
+                    const wallet = eth_wallet_4.Wallet.getClientInstance();
                     wallet.registerSendTxEvents({
                         transactionHash: txHashCallback,
                         confirmation: confirmationCallback
@@ -844,7 +942,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
-            this.state = new index_2.State(data_json_1.default);
+            this.state = new index_3.State(data_json_1.default);
             this.firstTokenSelection.title = (this.$render("i-hstack", { gap: "4px", verticalAlignment: "center" },
                 this.$render("i-label", { caption: "Select a token", font: { color: Theme.colors.primary.main, size: '1.25rem', bold: true } }),
                 this.$render("i-icon", { name: "question-circle", fill: Theme.colors.primary.main, width: 16, height: 16, tooltip: { content: 'Find a token by searching for its name or symbol or by pasting its address below.', placement: 'right' } })));
@@ -1023,7 +1121,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this.removeRpcWalletEvents();
             const rpcWalletId = this.state.initRpcWallet(this.defaultChainId);
             const rpcWallet = this.state.getRpcWallet();
-            const chainChangedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_3.Constants.RpcWalletEvent.ChainChanged, async (chainId) => {
+            const chainChangedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_4.Constants.RpcWalletEvent.ChainChanged, async (chainId) => {
                 this.firstTokenSelection.token = null;
                 this.secondTokenSelection.token = null;
                 this.form.firstToken = undefined;
@@ -1032,7 +1130,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 this.secondTokenSelection.classList.remove('has-token');
                 this.refreshUI();
             });
-            const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_3.Constants.RpcWalletEvent.Connected, async (connected) => {
+            const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_4.Constants.RpcWalletEvent.Connected, async (connected) => {
                 this.refreshUI();
             });
             const data = {
@@ -1190,7 +1288,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         }
         onConfirm() {
             var _a;
-            if (!(0, index_2.isClientWalletConnected)() || !this.state.isRpcWalletConnected()) {
+            if (!(0, index_3.isClientWalletConnected)() || !this.state.isRpcWalletConnected()) {
                 this.connectWallet();
                 return;
             }
@@ -1280,9 +1378,39 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.$render("i-scom-tx-status-modal", { id: "txStatusModal" }),
                     this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] }))));
         }
+        async handleFlowStage(target, stage, options) {
+            let widget;
+            if (stage === 'initialSetup') {
+                widget = new initialSetup_1.default();
+                target.appendChild(widget);
+                await widget.ready();
+                let properties = options.properties;
+                let tokenRequirements = options.tokenRequirements;
+                let invokerId = options.invokerId;
+                await widget.setData({
+                    executionProperties: properties,
+                    tokenRequirements,
+                    invokerId
+                });
+            }
+            else {
+                widget = this;
+                target.appendChild(widget);
+                await widget.ready();
+                let properties = options.properties;
+                let tag = options.tag;
+                let invokerId = options.invokerId;
+                this.state.setFlowInvokerId(invokerId);
+                await this.setData(properties);
+                if (tag) {
+                    this.setTag(tag);
+                }
+            }
+            return { widget };
+        }
     };
     GovernanceProposal = __decorate([
-        (0, components_4.customElements)('i-scom-governance-proposal')
+        (0, components_5.customElements)('i-scom-governance-proposal')
     ], GovernanceProposal);
     exports.default = GovernanceProposal;
 });
