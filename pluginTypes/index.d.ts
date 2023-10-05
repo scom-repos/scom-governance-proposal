@@ -19,6 +19,9 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         networks: INetworkConfig[];
         defaultChainId?: number;
         showHeader?: boolean;
+        action?: string;
+        fromToken?: string;
+        toToken?: string;
     }
     export interface IValidateStatus {
         action?: boolean;
@@ -210,6 +213,8 @@ declare module "@scom/scom-governance-proposal/flow/initialSetup.tsx" {
     export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         private lblConnectedStatus;
         private btnConnectWallet;
+        private fromTokenInput;
+        private toTokenInput;
         private mdWallet;
         private state;
         private tokenRequirements;
@@ -342,6 +347,9 @@ declare module "@scom/scom-governance-proposal" {
                 networks: INetworkConfig[];
                 defaultChainId?: number;
                 showHeader?: boolean;
+                action?: string;
+                fromToken?: string;
+                toToken?: string;
             }>;
             setData: (properties: IGovernanceProposal, linkParams?: Record<string, any>) => Promise<void>;
             getTag: any;

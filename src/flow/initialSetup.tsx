@@ -12,6 +12,7 @@ import {
 import { isClientWalletConnected, State } from "../store/index";
 import ScomWalletModal from "@scom/scom-wallet-modal";
 import { Constants, IEventBusRegistry, Wallet } from "@ijstech/eth-wallet";
+import ScomTokenInput from "@scom/scom-token-input";
 
 
 const Theme = Styles.Theme.ThemeVars;
@@ -32,6 +33,8 @@ declare global {
 export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     private lblConnectedStatus: Label;
     private btnConnectWallet: Button;
+    private fromTokenInput: ScomTokenInput;
+    private toTokenInput: ScomTokenInput;
     private mdWallet: ScomWalletModal;
     private state: State;
     private tokenRequirements: any;
@@ -98,7 +101,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.walletEvents.push(
             clientWallet.registerWalletEvent(this, Constants.ClientWalletEvent.AccountsChanged, async (payload: Record<string, any>) => {
                 const { account } = payload;
-                let connected = !! account;
+                let connected = !!account;
                 this.updateConnectStatus(connected);
             })
         )
@@ -112,11 +115,17 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     }
     init() {
         super.init();
+        this.fromTokenInput.style.setProperty('--input-background', '#232B5A');
+        this.fromTokenInput.style.setProperty('--input-font_color', '#fff');
+        this.toTokenInput.style.setProperty('--input-background', '#232B5A');
+        this.toTokenInput.style.setProperty('--input-font_color', '#fff');
         this.registerEvents();
     }
     async handleClickStart() {
         let eventName = `${this.invokerId}:nextStep`;
         this.executionProperties.aciton = 'restrictedOracle';
+        this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
+        this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
         this.$eventBus.dispatch(eventName, {
             isInitialSetup: true,
             tokenRequirements: this.tokenRequirements,
@@ -139,6 +148,36 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
                         ></i-button>
                     </i-hstack>
                 </i-vstack>
+                <i-label caption="Select a Pair"></i-label>
+                <i-hstack horizontalAlignment="center" verticalAlignment="center" wrap='wrap' gap={10}>
+                    <i-scom-token-input
+                        id="fromTokenInput"
+                        type="combobox"
+                        isBalanceShown={false}
+                        isBtnMaxShown={false}
+                        isInputShown={false}
+                        border={{ radius: 12 }}
+                    ></i-scom-token-input>
+                    <i-label caption="to" font={{ size: "1rem" }}></i-label>
+                    <i-scom-token-input
+                        id="toTokenInput"
+                        type="combobox"
+                        isBalanceShown={false}
+                        isBtnMaxShown={false}
+                        isInputShown={false}
+                        border={{ radius: 12 }}
+                    ></i-scom-token-input>
+                </i-hstack>
+                <i-hstack horizontalAlignment='center'>
+                    <i-button
+                        id="btnStart"
+                        caption="Start"
+                        padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }}
+                        font={{ color: Theme.colors.primary.contrastText, size: '1.5rem' }}
+                        onClick={this.handleClickStart}
+                    ></i-button>
+                </i-hstack>
+                <i-scom-wallet-modal id="mdWallet" wallets={[]} />
             </i-vstack>
         )
     }

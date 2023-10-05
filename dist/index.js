@@ -602,16 +602,39 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         }
         init() {
             super.init();
+            this.fromTokenInput.style.setProperty('--input-background', '#232B5A');
+            this.fromTokenInput.style.setProperty('--input-font_color', '#fff');
+            this.toTokenInput.style.setProperty('--input-background', '#232B5A');
+            this.toTokenInput.style.setProperty('--input-font_color', '#fff');
             this.registerEvents();
         }
-        async handleClickStart() { }
+        async handleClickStart() {
+            var _a, _b, _c, _d;
+            let eventName = `${this.invokerId}:nextStep`;
+            this.executionProperties.aciton = 'restrictedOracle';
+            this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
+            this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
+            this.$eventBus.dispatch(eventName, {
+                isInitialSetup: true,
+                tokenRequirements: this.tokenRequirements,
+                executionProperties: this.executionProperties
+            });
+        }
         render() {
             return (this.$render("i-vstack", { gap: "1rem", padding: { top: 10, bottom: 10, left: 20, right: 20 } },
                 this.$render("i-label", { caption: "Get Ready to Create Executive Proposal" }),
                 this.$render("i-vstack", { gap: "1rem" },
                     this.$render("i-label", { id: "lblConnectedStatus" }),
                     this.$render("i-hstack", null,
-                        this.$render("i-button", { id: "btnConnectWallet", caption: "Connect Wallet", font: { color: Theme.colors.primary.contrastText }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }, onClick: this.connectWallet.bind(this) })))));
+                        this.$render("i-button", { id: "btnConnectWallet", caption: "Connect Wallet", font: { color: Theme.colors.primary.contrastText }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }, onClick: this.connectWallet.bind(this) }))),
+                this.$render("i-label", { caption: "Select a Pair" }),
+                this.$render("i-hstack", { horizontalAlignment: "center", verticalAlignment: "center", wrap: 'wrap', gap: 10 },
+                    this.$render("i-scom-token-input", { id: "fromTokenInput", type: "combobox", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, border: { radius: 12 } }),
+                    this.$render("i-label", { caption: "to", font: { size: "1rem" } }),
+                    this.$render("i-scom-token-input", { id: "toTokenInput", type: "combobox", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, border: { radius: 12 } })),
+                this.$render("i-hstack", { horizontalAlignment: 'center' },
+                    this.$render("i-button", { id: "btnStart", caption: "Start", padding: { top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }, font: { color: Theme.colors.primary.contrastText, size: '1.5rem' }, onClick: this.handleClickStart })),
+                this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] })));
         }
     };
     ScomGovernanceProposalFlowInitialSetup = __decorate([

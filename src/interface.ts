@@ -16,6 +16,8 @@ export interface IGovernanceProposal {
     defaultChainId?: number;
     showHeader?: boolean;
     action?: string;
+    fromToken?: string;
+    toToken?: string;
 }
 
 export interface IValidateStatus {
