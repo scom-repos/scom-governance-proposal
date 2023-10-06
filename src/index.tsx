@@ -533,6 +533,23 @@ export default class GovernanceProposal extends Module {
             }
             this.firstTokenSelection.chainId = chainId;
             this.secondTokenSelection.chainId = chainId;
+            const tokens = tokenStore.getTokenList(chainId);
+            this.firstTokenSelection.tokenDataListProp = tokens;
+            this.secondTokenSelection.tokenDataListProp = tokens;
+            if (this.state.flowInvokerId) {
+                if (this._data.action) {
+                    this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
+                    this.onChangeAction(this.actionSelect);
+                }
+                if (this._data.fromToken) {
+                    this.firstTokenSelection.address = this._data.fromToken;
+                    this.onSelectFirstToken(this.firstTokenSelection.token);
+                }
+                if (this._data.toToken) {
+                    this.secondTokenSelection.address = this._data.toToken;
+                    this.onSelectSecondToken(this.secondTokenSelection.token);
+                }
+            }
             const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
             this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${FormatUtils.formatNumber(this.minThreshold, {decimalFigures:4})} ${tokenSymbol}`;
             this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
@@ -545,9 +562,6 @@ export default class GovernanceProposal extends Module {
             this.delayInput.value = this.form.delay;
             this.quorumInput.value = this.form.quorum;
             this.thresholdInput.value = this.form.threshold;
-            const tokens = tokenStore.getTokenList(chainId);
-            this.firstTokenSelection.tokenDataListProp = tokens;
-            this.secondTokenSelection.tokenDataListProp = tokens;
         });
     }
 

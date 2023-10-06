@@ -13,6 +13,7 @@ import { isClientWalletConnected, State } from "../store/index";
 import ScomWalletModal from "@scom/scom-wallet-modal";
 import { Constants, IEventBusRegistry, Wallet } from "@ijstech/eth-wallet";
 import ScomTokenInput from "@scom/scom-token-input";
+import { tokenStore } from "@scom/scom-token-list";
 
 
 const Theme = Styles.Theme.ThemeVars;
@@ -76,6 +77,11 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         const connected = isClientWalletConnected();
         this.updateConnectStatus(connected);
         await this.initWallet();
+        this.fromTokenInput.chainId = this.chainId;
+        this.toTokenInput.chainId = this.chainId;
+        const tokens = tokenStore.getTokenList(this.chainId);
+        this.fromTokenInput.tokenDataListProp = tokens;
+        this.toTokenInput.tokenDataListProp = tokens;
     }
     async connectWallet() {
         if (!isClientWalletConnected()) {
@@ -123,7 +129,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     }
     async handleClickStart() {
         let eventName = `${this.invokerId}:nextStep`;
-        this.executionProperties.aciton = 'restrictedOracle';
+        this.executionProperties.action = 'restrictedOracle';
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
         this.$eventBus.dispatch(eventName, {

@@ -524,7 +524,7 @@ define("@scom/scom-governance-proposal/formSchema.ts", ["require", "exports", "@
         }
     };
 });
-define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/store/index.ts", "@ijstech/eth-wallet"], function (require, exports, components_4, index_2, eth_wallet_3) {
+define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/store/index.ts", "@ijstech/eth-wallet", "@scom/scom-token-list"], function (require, exports, components_4, index_2, eth_wallet_3, scom_token_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_4.Styles.Theme.ThemeVars;
@@ -564,6 +564,11 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             const connected = (0, index_2.isClientWalletConnected)();
             this.updateConnectStatus(connected);
             await this.initWallet();
+            this.fromTokenInput.chainId = this.chainId;
+            this.toTokenInput.chainId = this.chainId;
+            const tokens = scom_token_list_2.tokenStore.getTokenList(this.chainId);
+            this.fromTokenInput.tokenDataListProp = tokens;
+            this.toTokenInput.tokenDataListProp = tokens;
         }
         async connectWallet() {
             if (!(0, index_2.isClientWalletConnected)()) {
@@ -611,7 +616,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         async handleClickStart() {
             var _a, _b, _c, _d;
             let eventName = `${this.invokerId}:nextStep`;
-            this.executionProperties.aciton = 'restrictedOracle';
+            this.executionProperties.action = 'restrictedOracle';
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
             this.$eventBus.dispatch(eventName, {
@@ -642,7 +647,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
     ], ScomGovernanceProposalFlowInitialSetup);
     exports.default = ScomGovernanceProposalFlowInitialSetup;
 });
-define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts", "@scom/scom-governance-proposal/flow/initialSetup.tsx"], function (require, exports, components_5, assets_1, index_3, data_json_1, eth_wallet_4, index_css_1, api_1, scom_token_list_2, formSchema_1, initialSetup_1) {
+define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts", "@scom/scom-governance-proposal/flow/initialSetup.tsx"], function (require, exports, components_5, assets_1, index_3, data_json_1, eth_wallet_4, index_css_1, api_1, scom_token_list_3, formSchema_1, initialSetup_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_5.Styles.Theme.ThemeVars;
@@ -794,7 +799,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 setTimeout(async () => {
                     var _a;
                     const chainId = this.chainId;
-                    scom_token_list_2.tokenStore.updateTokenMapData(chainId);
+                    scom_token_list_3.tokenStore.updateTokenMapData(chainId);
                     await this.initWallet();
                     await this.getGovParamValue();
                     this.updateBalance();
@@ -809,6 +814,23 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     }
                     this.firstTokenSelection.chainId = chainId;
                     this.secondTokenSelection.chainId = chainId;
+                    const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
+                    this.firstTokenSelection.tokenDataListProp = tokens;
+                    this.secondTokenSelection.tokenDataListProp = tokens;
+                    if (this.state.flowInvokerId) {
+                        if (this._data.action) {
+                            this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
+                            this.onChangeAction(this.actionSelect);
+                        }
+                        if (this._data.fromToken) {
+                            this.firstTokenSelection.address = this._data.fromToken;
+                            this.onSelectFirstToken(this.firstTokenSelection.token);
+                        }
+                        if (this._data.toToken) {
+                            this.secondTokenSelection.address = this._data.toToken;
+                            this.onSelectSecondToken(this.secondTokenSelection.token);
+                        }
+                    }
                     const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
                     this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_5.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
@@ -821,9 +843,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.delayInput.value = this.form.delay;
                     this.quorumInput.value = this.form.quorum;
                     this.thresholdInput.value = this.form.threshold;
-                    const tokens = scom_token_list_2.tokenStore.getTokenList(chainId);
-                    this.firstTokenSelection.tokenDataListProp = tokens;
-                    this.secondTokenSelection.tokenDataListProp = tokens;
                 });
             };
             this.showResultMessage = (status, content) => {
@@ -1173,7 +1192,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             const rpcWallet = this.state.getRpcWallet();
             if (rpcWallet.address) {
                 if (!this.isEmptyData(this._data))
-                    await scom_token_list_2.tokenStore.updateAllTokenBalances(rpcWallet);
+                    await scom_token_list_3.tokenStore.updateAllTokenBalances(rpcWallet);
             }
         }
         onChangeAction(source) {
