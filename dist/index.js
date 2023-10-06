@@ -901,6 +901,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 exeCmd = 'oracle';
                 try {
                     const delayInSeconds = this.form.delay;
+                    const action = this.actionSelect.selectedItem.label;
+                    const chainId = this.chainId;
                     this.showResultMessage('warning', 'Creating new Executive Proposal');
                     const txHashCallback = async (err, receipt) => {
                         if (err) {
@@ -911,6 +913,25 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         }
                     };
                     const confirmationCallback = async (receipt) => {
+                        if (this.state.flowInvokerId) {
+                            const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
+                            const transactionsInfoArr = [
+                                {
+                                    desc: 'Create Executive Proposal - ' + action,
+                                    chainId: chainId,
+                                    fromToken: null,
+                                    toToken: null,
+                                    fromTokenAmount: '-',
+                                    toTokenAmount: '-',
+                                    hash: receipt.transactionHash,
+                                    timestamp
+                                }
+                            ];
+                            const eventName = `${this.state.flowInvokerId}:addTransactions`;
+                            components_5.application.EventBus.dispatch(eventName, {
+                                list: transactionsInfoArr
+                            });
+                        }
                     };
                     const wallet = eth_wallet_4.Wallet.getClientInstance();
                     wallet.registerSendTxEvents({

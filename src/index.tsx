@@ -745,6 +745,8 @@ export default class GovernanceProposal extends Module {
 
         try {
             const delayInSeconds = this.form.delay;
+            const action = (this.actionSelect.selectedItem as IComboItem).label;
+            const chainId = this.chainId;
             this.showResultMessage('warning', 'Creating new Executive Proposal');
 
             const txHashCallback = async (err: Error, receipt?: string) => {
@@ -756,6 +758,25 @@ export default class GovernanceProposal extends Module {
             }
     
             const confirmationCallback = async (receipt: any) => {
+                if (this.state.flowInvokerId) {
+                    const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
+                    const transactionsInfoArr = [
+                        {
+                            desc: 'Create Executive Proposal - ' + action,
+                            chainId: chainId,
+                            fromToken: null,
+                            toToken: null,
+                            fromTokenAmount: '-',
+                            toTokenAmount: '-',
+                            hash: receipt.transactionHash,
+                            timestamp
+                        }
+                    ];
+                    const eventName = `${this.state.flowInvokerId}:addTransactions`;
+                    application.EventBus.dispatch(eventName, {
+                        list: transactionsInfoArr
+                    });
+                }
             };
     
             const wallet = Wallet.getClientInstance();
