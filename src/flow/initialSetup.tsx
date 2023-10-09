@@ -127,11 +127,12 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.executionProperties.action = 'restrictedOracle';
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
-        this.state.handleNextFlowStep({
-            isInitialSetup: true,
-            tokenRequirements: this.tokenRequirements,
-            executionProperties: this.executionProperties
-        });
+        if (this.state.handleNextFlowStep)
+            this.state.handleNextFlowStep({
+                isInitialSetup: true,
+                tokenRequirements: this.tokenRequirements,
+                executionProperties: this.executionProperties
+            });
     }
     render() {
         return (
