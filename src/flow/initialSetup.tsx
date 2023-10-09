@@ -1,10 +1,8 @@
 import {
     application,
     Button,
-    Container,
     ControlElement,
     customElements,
-    IEventBus,
     Label,
     Module,
     Styles
@@ -37,17 +35,16 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     private fromTokenInput: ScomTokenInput;
     private toTokenInput: ScomTokenInput;
     private mdWallet: ScomWalletModal;
-    private state: State;
+    private _state: State;
     private tokenRequirements: any;
     private executionProperties: any;
-    private invokerId: string;
-    private $eventBus: IEventBus;
     private walletEvents: IEventBusRegistry[] = [];
 
-    constructor(parent?: Container, options?: ControlElement) {
-        super(parent, options);
-        this.state = new State({});
-        this.$eventBus = application.EventBus;
+    get state(): State {
+        return this._state;
+    }
+    set state(value: State) {
+        this._state = value;
     }
     private get rpcWallet() {
         return this.state.getRpcWallet();
@@ -61,7 +58,6 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     async setData(value: any) {
         this.executionProperties = value.executionProperties;
         this.tokenRequirements = value.tokenRequirements;
-        this.invokerId = value.invokerId;
         await this.resetRpcWallet();
         await this.initializeWidgetConfig();
     }
@@ -128,11 +124,10 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.registerEvents();
     }
     async handleClickStart() {
-        let eventName = `${this.invokerId}:nextStep`;
         this.executionProperties.action = 'restrictedOracle';
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
-        this.$eventBus.dispatch(eventName, {
+        this.state.handleNextFlowStep({
             isInitialSetup: true,
             tokenRequirements: this.tokenRequirements,
             executionProperties: this.executionProperties

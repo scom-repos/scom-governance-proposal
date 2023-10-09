@@ -2,6 +2,7 @@ import {
     application,
     Button,
     ComboBox,
+    Container,
     Control,
     ControlElement,
     customElements,
@@ -239,6 +240,11 @@ export default class GovernanceProposal extends Module {
         return this.hasEnoughStake;
     }
 
+    constructor(parent?: Container, options?: any) {
+        super(parent, options);
+        this.state = new State(configData);
+    }
+
     removeRpcWalletEvents() {
         const rpcWallet = this.state.getRpcWallet();
         if (rpcWallet) rpcWallet.unregisterAllWalletEvents();
@@ -256,7 +262,6 @@ export default class GovernanceProposal extends Module {
     async init() {
         this.isReadyCallbackQueued = true;
         super.init();
-        this.state = new State(configData);
         this.firstTokenSelection.title = (
             <i-hstack gap="4px" verticalAlignment="center">
                 <i-label caption="Select a token" font={{ color: Theme.colors.primary.main, size: '1.25rem', bold: true }}></i-label>
@@ -536,19 +541,17 @@ export default class GovernanceProposal extends Module {
             const tokens = tokenStore.getTokenList(chainId);
             this.firstTokenSelection.tokenDataListProp = tokens;
             this.secondTokenSelection.tokenDataListProp = tokens;
-            if (this.state.flowInvokerId) {
-                if (this._data.action) {
-                    this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
-                    this.onChangeAction(this.actionSelect);
-                }
-                if (this._data.fromToken) {
-                    this.firstTokenSelection.address = this._data.fromToken;
-                    this.onSelectFirstToken(this.firstTokenSelection.token);
-                }
-                if (this._data.toToken) {
-                    this.secondTokenSelection.address = this._data.toToken;
-                    this.onSelectSecondToken(this.secondTokenSelection.token);
-                }
+            if (this._data.action) {
+                this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
+                this.onChangeAction(this.actionSelect);
+            }
+            if (this._data.fromToken) {
+                this.firstTokenSelection.address = this._data.fromToken;
+                this.onSelectFirstToken(this.firstTokenSelection.token);
+            }
+            if (this._data.toToken) {
+                this.secondTokenSelection.address = this._data.toToken;
+                this.onSelectSecondToken(this.secondTokenSelection.token);
             }
             const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
             this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${FormatUtils.formatNumber(this.minThreshold, {decimalFigures:4})} ${tokenSymbol}`;
@@ -758,7 +761,7 @@ export default class GovernanceProposal extends Module {
             }
     
             const confirmationCallback = async (receipt: any) => {
-                if (this.state.flowInvokerId) {
+                if (this.state.handleAddTransactions) {
                     const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                     const transactionsInfoArr = [
                         {
@@ -772,8 +775,7 @@ export default class GovernanceProposal extends Module {
                             timestamp
                         }
                     ];
-                    const eventName = `${this.state.flowInvokerId}:addTransactions`;
-                    application.EventBus.dispatch(eventName, {
+                    this.state.handleAddTransactions({
                         list: transactionsInfoArr
                     });
                 }
@@ -1077,13 +1079,14 @@ export default class GovernanceProposal extends Module {
             widget = new ScomGovernanceProposalFlowInitialSetup();
             target.appendChild(widget);
             await widget.ready();
+            widget.state = this.state;
             let properties = options.properties;
             let tokenRequirements = options.tokenRequirements;
-            let invokerId = options.invokerId;
+            this.state.handleNextFlowStep = options.onNextStep;
+            this.state.handleAddTransactions = options.onAddTransactions;
             await widget.setData({
                 executionProperties: properties,
-                tokenRequirements,
-                invokerId
+                tokenRequirements
             });
         } else {
             widget = this;
@@ -1091,8 +1094,8 @@ export default class GovernanceProposal extends Module {
             await widget.ready();
 			let properties = options.properties;
 			let tag = options.tag;
-			let invokerId = options.invokerId;
-			this.state.setFlowInvokerId(invokerId);
+            this.state.handleNextFlowStep = options.onNextStep;
+            this.state.handleAddTransactions = options.onAddTransactions;
 			await this.setData(properties);
 			if (tag) {
 				this.setTag(tag);

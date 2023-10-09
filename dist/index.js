@@ -135,9 +135,6 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
                 this.setNetworkList(options.networks, options.infuraId);
             }
         }
-        setFlowInvokerId(id) {
-            this.flowInvokerId = id;
-        }
         initRpcWallet(defaultChainId) {
             var _a, _b, _c;
             if (this.rpcWalletId) {
@@ -529,11 +526,15 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_4.Styles.Theme.ThemeVars;
     let ScomGovernanceProposalFlowInitialSetup = class ScomGovernanceProposalFlowInitialSetup extends components_4.Module {
-        constructor(parent, options) {
-            super(parent, options);
+        constructor() {
+            super(...arguments);
             this.walletEvents = [];
-            this.state = new index_2.State({});
-            this.$eventBus = components_4.application.EventBus;
+        }
+        get state() {
+            return this._state;
+        }
+        set state(value) {
+            this._state = value;
         }
         get rpcWallet() {
             return this.state.getRpcWallet();
@@ -547,7 +548,6 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         async setData(value) {
             this.executionProperties = value.executionProperties;
             this.tokenRequirements = value.tokenRequirements;
-            this.invokerId = value.invokerId;
             await this.resetRpcWallet();
             await this.initializeWidgetConfig();
         }
@@ -615,11 +615,10 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         }
         async handleClickStart() {
             var _a, _b, _c, _d;
-            let eventName = `${this.invokerId}:nextStep`;
             this.executionProperties.action = 'restrictedOracle';
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
-            this.$eventBus.dispatch(eventName, {
+            this.state.handleNextFlowStep({
                 isInitialSetup: true,
                 tokenRequirements: this.tokenRequirements,
                 executionProperties: this.executionProperties
@@ -658,8 +657,47 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         }
     ];
     let GovernanceProposal = class GovernanceProposal extends components_5.Module {
-        constructor() {
-            super(...arguments);
+        get chainId() {
+            return this.state.getChainId();
+        }
+        get defaultChainId() {
+            return this._data.defaultChainId;
+        }
+        set defaultChainId(value) {
+            this._data.defaultChainId = value;
+        }
+        get wallets() {
+            var _a;
+            return (_a = this._data.wallets) !== null && _a !== void 0 ? _a : [];
+        }
+        set wallets(value) {
+            this._data.wallets = value;
+        }
+        get networks() {
+            var _a;
+            return (_a = this._data.networks) !== null && _a !== void 0 ? _a : [];
+        }
+        set networks(value) {
+            this._data.networks = value;
+        }
+        get showHeader() {
+            var _a;
+            return (_a = this._data.showHeader) !== null && _a !== void 0 ? _a : true;
+        }
+        set showHeader(value) {
+            this._data.showHeader = value;
+        }
+        get isTokenPairInputShown() {
+            return this.form.action === 'oracle' || this.form.action === 'restrictedOracle' || this.form.action === 'peggedOracle' || this.form.action === 'otcOracle';
+        }
+        get hasEnoughStake() {
+            return this.currentStake >= this.minThreshold;
+        }
+        get isValidToCreateVote() {
+            return this.hasEnoughStake;
+        }
+        constructor(parent, options) {
+            super(parent, options);
             this._data = {
                 wallets: [],
                 networks: []
@@ -817,19 +855,17 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
                     this.firstTokenSelection.tokenDataListProp = tokens;
                     this.secondTokenSelection.tokenDataListProp = tokens;
-                    if (this.state.flowInvokerId) {
-                        if (this._data.action) {
-                            this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
-                            this.onChangeAction(this.actionSelect);
-                        }
-                        if (this._data.fromToken) {
-                            this.firstTokenSelection.address = this._data.fromToken;
-                            this.onSelectFirstToken(this.firstTokenSelection.token);
-                        }
-                        if (this._data.toToken) {
-                            this.secondTokenSelection.address = this._data.toToken;
-                            this.onSelectSecondToken(this.secondTokenSelection.token);
-                        }
+                    if (this._data.action) {
+                        this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
+                        this.onChangeAction(this.actionSelect);
+                    }
+                    if (this._data.fromToken) {
+                        this.firstTokenSelection.address = this._data.fromToken;
+                        this.onSelectFirstToken(this.firstTokenSelection.token);
+                    }
+                    if (this._data.toToken) {
+                        this.secondTokenSelection.address = this._data.toToken;
+                        this.onSelectSecondToken(this.secondTokenSelection.token);
                     }
                     const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
                     this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_5.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
@@ -913,7 +949,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         }
                     };
                     const confirmationCallback = async (receipt) => {
-                        if (this.state.flowInvokerId) {
+                        if (this.state.handleAddTransactions) {
                             const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                             const transactionsInfoArr = [
                                 {
@@ -927,8 +963,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                     timestamp
                                 }
                             ];
-                            const eventName = `${this.state.flowInvokerId}:addTransactions`;
-                            components_5.application.EventBus.dispatch(eventName, {
+                            this.state.handleAddTransactions({
                                 list: transactionsInfoArr
                             });
                         }
@@ -950,45 +985,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.btnConfirm.rightIcon.visible = false;
                 }
             };
-        }
-        get chainId() {
-            return this.state.getChainId();
-        }
-        get defaultChainId() {
-            return this._data.defaultChainId;
-        }
-        set defaultChainId(value) {
-            this._data.defaultChainId = value;
-        }
-        get wallets() {
-            var _a;
-            return (_a = this._data.wallets) !== null && _a !== void 0 ? _a : [];
-        }
-        set wallets(value) {
-            this._data.wallets = value;
-        }
-        get networks() {
-            var _a;
-            return (_a = this._data.networks) !== null && _a !== void 0 ? _a : [];
-        }
-        set networks(value) {
-            this._data.networks = value;
-        }
-        get showHeader() {
-            var _a;
-            return (_a = this._data.showHeader) !== null && _a !== void 0 ? _a : true;
-        }
-        set showHeader(value) {
-            this._data.showHeader = value;
-        }
-        get isTokenPairInputShown() {
-            return this.form.action === 'oracle' || this.form.action === 'restrictedOracle' || this.form.action === 'peggedOracle' || this.form.action === 'otcOracle';
-        }
-        get hasEnoughStake() {
-            return this.currentStake >= this.minThreshold;
-        }
-        get isValidToCreateVote() {
-            return this.hasEnoughStake;
+            this.state = new index_3.State(data_json_1.default);
         }
         removeRpcWalletEvents() {
             const rpcWallet = this.state.getRpcWallet();
@@ -1005,7 +1002,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
-            this.state = new index_3.State(data_json_1.default);
             this.firstTokenSelection.title = (this.$render("i-hstack", { gap: "4px", verticalAlignment: "center" },
                 this.$render("i-label", { caption: "Select a token", font: { color: Theme.colors.primary.main, size: '1.25rem', bold: true } }),
                 this.$render("i-icon", { name: "question-circle", fill: Theme.colors.primary.main, width: 16, height: 16, tooltip: { content: 'Find a token by searching for its name or symbol or by pasting its address below.', placement: 'right' } })));
@@ -1447,13 +1443,14 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 widget = new initialSetup_1.default();
                 target.appendChild(widget);
                 await widget.ready();
+                widget.state = this.state;
                 let properties = options.properties;
                 let tokenRequirements = options.tokenRequirements;
-                let invokerId = options.invokerId;
+                this.state.handleNextFlowStep = options.onNextStep;
+                this.state.handleAddTransactions = options.onAddTransactions;
                 await widget.setData({
                     executionProperties: properties,
-                    tokenRequirements,
-                    invokerId
+                    tokenRequirements
                 });
             }
             else {
@@ -1462,8 +1459,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 await widget.ready();
                 let properties = options.properties;
                 let tag = options.tag;
-                let invokerId = options.invokerId;
-                this.state.setFlowInvokerId(invokerId);
+                this.state.handleNextFlowStep = options.onNextStep;
+                this.state.handleAddTransactions = options.onAddTransactions;
                 await this.setData(properties);
                 if (tag) {
                     this.setTag(tag);
