@@ -618,11 +618,12 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             this.executionProperties.action = 'restrictedOracle';
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
-            this.state.handleNextFlowStep({
-                isInitialSetup: true,
-                tokenRequirements: this.tokenRequirements,
-                executionProperties: this.executionProperties
-            });
+            if (this.state.handleNextFlowStep)
+                this.state.handleNextFlowStep({
+                    isInitialSetup: true,
+                    tokenRequirements: this.tokenRequirements,
+                    executionProperties: this.executionProperties
+                });
         }
         render() {
             return (this.$render("i-vstack", { gap: "1rem", padding: { top: 10, bottom: 10, left: 20, right: 20 } },
