@@ -3,6 +3,7 @@ import {
     Button,
     ControlElement,
     customElements,
+    FormatUtils,
     Label,
     Module,
     Styles
@@ -12,6 +13,7 @@ import ScomWalletModal from "@scom/scom-wallet-modal";
 import { Constants, IEventBusRegistry, Wallet } from "@ijstech/eth-wallet";
 import ScomTokenInput from "@scom/scom-token-input";
 import { tokenStore } from "@scom/scom-token-list";
+import { getVotingValue, stakeOf } from "../api";
 
 
 const Theme = Styles.Theme.ThemeVars;
@@ -32,13 +34,19 @@ declare global {
 export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     private lblConnectedStatus: Label;
     private btnConnectWallet: Button;
+    private lblMinVotingBalance: Label;
+    private lblVotingBalance: Label;
+    private lblBalanceErr: Label;
     private fromTokenInput: ScomTokenInput;
     private toTokenInput: ScomTokenInput;
+    private btnStart: Button;
     private mdWallet: ScomWalletModal;
     private _state: State;
     private tokenRequirements: any;
     private executionProperties: any;
     private walletEvents: IEventBusRegistry[] = [];
+    private minThreshold: number = 0;
+    private votingBalance: number = 0;
 
     get state(): State {
         return this._state;
@@ -51,6 +59,9 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     }
     private get chainId() {
         return this.executionProperties.chainId || this.executionProperties.defaultChainId;
+    }
+    private get hasEnoughStake() {
+        return this.votingBalance >= this.minThreshold;
     }
     private async resetRpcWallet() {
         await this.state.initRpcWallet(this.chainId);
@@ -78,6 +89,13 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         const tokens = tokenStore.getTokenList(this.chainId);
         this.fromTokenInput.tokenDataListProp = tokens;
         this.toTokenInput.tokenDataListProp = tokens;
+        const paramValueObj = await getVotingValue(this.state, 'vote');
+        this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
+        this.votingBalance = (await stakeOf(this.state, this.rpcWallet.account.address)).toNumber();
+        this.lblMinVotingBalance.caption = FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 });
+        this.lblVotingBalance.caption = FormatUtils.formatNumber(this.votingBalance, { decimalFigures: 4 });
+        this.lblBalanceErr.visible = !this.hasEnoughStake;
+        this.btnStart.enabled = this.hasEnoughStake;
     }
     async connectWallet() {
         if (!isClientWalletConnected()) {
@@ -124,6 +142,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.registerEvents();
     }
     async handleClickStart() {
+        if (!this.hasEnoughStake) return;
         this.executionProperties.action = 'restrictedOracle';
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
@@ -150,6 +169,15 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
                         ></i-button>
                     </i-hstack>
                 </i-vstack>
+                <i-hstack verticalAlignment="center" horizontalAlignment="space-between" gap="6px">
+                    <i-label caption="Minimum Voting Balance"></i-label>
+                    <i-label id="lblMinVotingBalance"></i-label>
+                </i-hstack>
+                <i-hstack verticalAlignment="center" horizontalAlignment="space-between" gap="6px">
+                    <i-label caption="Voting Balance"></i-label>
+                    <i-label id="lblVotingBalance"></i-label>
+                </i-hstack>
+                <i-label id="lblBalanceErr" caption="Insufficient Voting Balance" font={{ color: Theme.colors.error.main }} visible={false}></i-label>
                 <i-label caption="Select a Pair"></i-label>
                 <i-hstack horizontalAlignment="center" verticalAlignment="center" wrap='wrap' gap={10}>
                     <i-scom-token-input

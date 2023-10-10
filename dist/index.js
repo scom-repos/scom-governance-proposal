@@ -521,7 +521,7 @@ define("@scom/scom-governance-proposal/formSchema.ts", ["require", "exports", "@
         }
     };
 });
-define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/store/index.ts", "@ijstech/eth-wallet", "@scom/scom-token-list"], function (require, exports, components_4, index_2, eth_wallet_3, scom_token_list_2) {
+define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/store/index.ts", "@ijstech/eth-wallet", "@scom/scom-token-list", "@scom/scom-governance-proposal/api.ts"], function (require, exports, components_4, index_2, eth_wallet_3, scom_token_list_2, api_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_4.Styles.Theme.ThemeVars;
@@ -529,6 +529,8 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         constructor() {
             super(...arguments);
             this.walletEvents = [];
+            this.minThreshold = 0;
+            this.votingBalance = 0;
         }
         get state() {
             return this._state;
@@ -541,6 +543,9 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         }
         get chainId() {
             return this.executionProperties.chainId || this.executionProperties.defaultChainId;
+        }
+        get hasEnoughStake() {
+            return this.votingBalance >= this.minThreshold;
         }
         async resetRpcWallet() {
             await this.state.initRpcWallet(this.chainId);
@@ -569,6 +574,13 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             const tokens = scom_token_list_2.tokenStore.getTokenList(this.chainId);
             this.fromTokenInput.tokenDataListProp = tokens;
             this.toTokenInput.tokenDataListProp = tokens;
+            const paramValueObj = await (0, api_1.getVotingValue)(this.state, 'vote');
+            this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
+            this.votingBalance = (await (0, api_1.stakeOf)(this.state, this.rpcWallet.account.address)).toNumber();
+            this.lblMinVotingBalance.caption = components_4.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 });
+            this.lblVotingBalance.caption = components_4.FormatUtils.formatNumber(this.votingBalance, { decimalFigures: 4 });
+            this.lblBalanceErr.visible = !this.hasEnoughStake;
+            this.btnStart.enabled = this.hasEnoughStake;
         }
         async connectWallet() {
             if (!(0, index_2.isClientWalletConnected)()) {
@@ -615,6 +627,8 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
         }
         async handleClickStart() {
             var _a, _b, _c, _d;
+            if (!this.hasEnoughStake)
+                return;
             this.executionProperties.action = 'restrictedOracle';
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
@@ -632,6 +646,13 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
                     this.$render("i-label", { id: "lblConnectedStatus" }),
                     this.$render("i-hstack", null,
                         this.$render("i-button", { id: "btnConnectWallet", caption: "Connect Wallet", font: { color: Theme.colors.primary.contrastText }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.75rem', right: '0.75rem' }, onClick: this.connectWallet.bind(this) }))),
+                this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: "space-between", gap: "6px" },
+                    this.$render("i-label", { caption: "Minimum Voting Balance" }),
+                    this.$render("i-label", { id: "lblMinVotingBalance" })),
+                this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: "space-between", gap: "6px" },
+                    this.$render("i-label", { caption: "Voting Balance" }),
+                    this.$render("i-label", { id: "lblVotingBalance" })),
+                this.$render("i-label", { id: "lblBalanceErr", caption: "Insufficient Voting Balance", font: { color: Theme.colors.error.main }, visible: false }),
                 this.$render("i-label", { caption: "Select a Pair" }),
                 this.$render("i-hstack", { horizontalAlignment: "center", verticalAlignment: "center", wrap: 'wrap', gap: 10 },
                     this.$render("i-scom-token-input", { id: "fromTokenInput", type: "combobox", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, border: { radius: 12 } }),
@@ -647,7 +668,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
     ], ScomGovernanceProposalFlowInitialSetup);
     exports.default = ScomGovernanceProposalFlowInitialSetup;
 });
-define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts", "@scom/scom-governance-proposal/flow/initialSetup.tsx"], function (require, exports, components_5, assets_1, index_3, data_json_1, eth_wallet_4, index_css_1, api_1, scom_token_list_3, formSchema_1, initialSetup_1) {
+define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/components", "@scom/scom-governance-proposal/assets.ts", "@scom/scom-governance-proposal/store/index.ts", "@scom/scom-governance-proposal/data.json.ts", "@ijstech/eth-wallet", "@scom/scom-governance-proposal/index.css.ts", "@scom/scom-governance-proposal/api.ts", "@scom/scom-token-list", "@scom/scom-governance-proposal/formSchema.ts", "@scom/scom-governance-proposal/flow/initialSetup.tsx"], function (require, exports, components_5, assets_1, index_3, data_json_1, eth_wallet_4, index_css_1, api_2, scom_token_list_3, formSchema_1, initialSetup_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_5.Styles.Theme.ThemeVars;
@@ -815,10 +836,10 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 }
             };
             this.getGovParamValue = async () => {
-                let paramValueObj = await (0, api_1.getVotingValue)(this.state, 'vote');
+                let paramValueObj = await (0, api_2.getVotingValue)(this.state, 'vote');
                 const wallet = this.state.getRpcWallet();
                 const selectedAddress = wallet.account.address;
-                this.currentStake = (await (0, api_1.stakeOf)(this.state, selectedAddress)).toNumber();
+                this.currentStake = (await (0, api_2.stakeOf)(this.state, selectedAddress)).toNumber();
                 const extraSecs = 60;
                 this.maxVoteDurationInDays = paramValueObj.maxVoteDuration || 0;
                 this.minVoteDurationInDays = paramValueObj.minVoteDuration ? paramValueObj.minVoteDuration + extraSecs : 0;
@@ -921,16 +942,16 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 const toToken = this.form.secondToken;
                 let pair = index_3.nullAddress;
                 try {
-                    pair = await (0, api_1.getPair)(this.state, fromToken, toToken);
+                    pair = await (0, api_2.getPair)(this.state, fromToken, toToken);
                 }
                 catch (error) {
                 }
                 if (pair === index_3.nullAddress) {
-                    let tempVal = await (0, api_1.getVotingValue)(this.state, 'oracle');
+                    let tempVal = await (0, api_2.getVotingValue)(this.state, 'oracle');
                     this.minThreshold = tempVal.minOaxTokenToCreateVote;
                 }
                 else {
-                    let tempVal = await (0, api_1.getVotingValue)(this.state, 'vote');
+                    let tempVal = await (0, api_2.getVotingValue)(this.state, 'vote');
                     this.minThreshold = tempVal.minOaxTokenToCreateVote;
                 }
                 exeParams1 = [fromToken, toToken];
@@ -974,7 +995,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         transactionHash: txHashCallback,
                         confirmation: confirmationCallback
                     });
-                    let result = await (0, api_1.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
+                    let result = await (0, api_2.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
                     console.log(result);
                 }
                 catch (err) {

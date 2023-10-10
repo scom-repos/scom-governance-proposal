@@ -214,17 +214,24 @@ declare module "@scom/scom-governance-proposal/flow/initialSetup.tsx" {
     export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         private lblConnectedStatus;
         private btnConnectWallet;
+        private lblMinVotingBalance;
+        private lblVotingBalance;
+        private lblBalanceErr;
         private fromTokenInput;
         private toTokenInput;
+        private btnStart;
         private mdWallet;
         private _state;
         private tokenRequirements;
         private executionProperties;
         private walletEvents;
+        private minThreshold;
+        private votingBalance;
         get state(): State;
         set state(value: State);
         private get rpcWallet();
         private get chainId();
+        private get hasEnoughStake();
         private resetRpcWallet;
         setData(value: any): Promise<void>;
         private initWallet;
