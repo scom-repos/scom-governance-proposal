@@ -996,7 +996,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         confirmation: confirmationCallback
                     });
                     let result = await (0, api_2.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
-                    console.log(result);
+                    if (result) {
+                        this.proposalAlert.status = "success";
+                        this.proposalAlert.title = "Voting Address";
+                        this.proposalAlert.content = result;
+                        this.proposalAlert.showModal();
+                    }
                 }
                 catch (err) {
                     console.log('newVote', err);
@@ -1456,6 +1461,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                             this.$render("i-label", { font: { size: '0.875rem' }, caption: "Minimum: 50%", margin: { left: 'auto' } }))))),
                             this.$render("i-vstack", { width: "100%", padding: { left: "1rem", right: "1rem" } },
                                 this.$render("i-button", { id: 'btnConfirm', class: 'btn-os', height: 'auto', caption: "Create Executive Proposal", padding: { top: '0.75rem', bottom: '0.75rem', left: '1.5rem', right: '1.5rem' }, border: { radius: 5 }, font: { weight: 600 }, rightIcon: { spin: true, visible: false }, enabled: false, onClick: this.onConfirm.bind(this) })))),
+                    this.$render("i-alert", { id: "proposalAlert" }),
                     this.$render("i-scom-tx-status-modal", { id: "txStatusModal" }),
                     this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] }))));
         }

@@ -294,6 +294,7 @@ declare module "@scom/scom-governance-proposal" {
         private thresholdErr;
         private btnConfirm;
         private systemStack;
+        private proposalAlert;
         private txStatusModal;
         private mdWallet;
         private state;

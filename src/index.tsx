@@ -1,4 +1,5 @@
 import {
+    Alert,
     application,
     Button,
     ComboBox,
@@ -86,6 +87,7 @@ export default class GovernanceProposal extends Module {
     private thresholdErr: Label;
     private btnConfirm: Button;
     private systemStack: VStack;
+    private proposalAlert: Alert;
     private txStatusModal: ScomTxStatusModal;
     private mdWallet: ScomWalletModal;
     private state: State;
@@ -797,7 +799,12 @@ export default class GovernanceProposal extends Module {
                 exeParams1,
                 exeParams2
             );
-            console.log(result);
+            if (result) {
+                this.proposalAlert.status = "success";
+                this.proposalAlert.title = "Voting Address";
+                this.proposalAlert.content = result;
+                this.proposalAlert.showModal();
+            }
         } catch (err) {
             console.log('newVote', err);
             this.showResultMessage('error', '');
@@ -1066,6 +1073,7 @@ export default class GovernanceProposal extends Module {
                             </i-vstack>
                         </i-vstack>
                     </i-panel>
+                    <i-alert id="proposalAlert"></i-alert>
                     <i-scom-tx-status-modal id="txStatusModal" />
                     <i-scom-wallet-modal id="mdWallet" wallets={[]} />
                 </i-panel>
