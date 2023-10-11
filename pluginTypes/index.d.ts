@@ -19,12 +19,10 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         networks: INetworkConfig[];
         defaultChainId?: number;
         showHeader?: boolean;
-        action?: string;
         fromToken?: string;
         toToken?: string;
     }
     export interface IValidateStatus {
-        action?: boolean;
         duration?: boolean;
         quorum?: boolean;
         delay?: boolean;
@@ -38,7 +36,6 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         profileOption?: boolean;
     }
     export interface IProposalForm {
-        action: string;
         duration: number;
         quorum: number;
         value: string;
@@ -138,7 +135,7 @@ declare module "@scom/scom-governance-proposal/index.css.ts" {
 }
 /// <amd-module name="@scom/scom-governance-proposal/api.ts" />
 declare module "@scom/scom-governance-proposal/api.ts" {
-    import { BigNumber } from "@ijstech/eth-wallet";
+    import { BigNumber, TransactionReceipt } from "@ijstech/eth-wallet";
     import { ITokenObject } from "@scom/scom-token-list";
     import { State } from "@scom/scom-governance-proposal/store/index.ts";
     export function stakeOf(state: State, address: string): Promise<BigNumber>;
@@ -151,6 +148,7 @@ declare module "@scom/scom-governance-proposal/api.ts" {
     }>;
     export function getPair(state: State, tokenA: ITokenObject, tokenB: ITokenObject): Promise<string>;
     export function doNewVote(state: State, quorum: number, threshold: number, voteEndTime: number, exeDelay: number, exeCmd: string, exeParams1: any, exeParams2: any): Promise<string>;
+    export function parseNewVoteEvent(state: State, receipt: TransactionReceipt): string;
 }
 /// <amd-module name="@scom/scom-governance-proposal/formSchema.ts" />
 declare module "@scom/scom-governance-proposal/formSchema.ts" {
@@ -268,10 +266,7 @@ declare module "@scom/scom-governance-proposal" {
     export default class GovernanceProposal extends Module {
         private dappContainer;
         private loadingElm;
-        private actionSelect;
-        private actionErr;
         private lblMinVotingBalance;
-        private firstAddressStack;
         private actionStack;
         private tokenPairStack;
         private firstTokenSelection;
@@ -293,7 +288,6 @@ declare module "@scom/scom-governance-proposal" {
         private thresholdInput;
         private thresholdErr;
         private btnConfirm;
-        private systemStack;
         private proposalAlert;
         private txStatusModal;
         private mdWallet;
@@ -320,7 +314,6 @@ declare module "@scom/scom-governance-proposal" {
         set networks(value: INetworkConfig[]);
         get showHeader(): boolean;
         set showHeader(value: boolean);
-        private get isTokenPairInputShown();
         private get hasEnoughStake();
         private get isValidToCreateVote();
         constructor(parent?: Container, options?: any);
@@ -356,7 +349,6 @@ declare module "@scom/scom-governance-proposal" {
                 networks: INetworkConfig[];
                 defaultChainId?: number;
                 showHeader?: boolean;
-                action?: string;
                 fromToken?: string;
                 toToken?: string;
             }>;
@@ -380,7 +372,6 @@ declare module "@scom/scom-governance-proposal" {
         private showResultMessage;
         private connectWallet;
         private updateBalance;
-        private onChangeAction;
         private getErrorMessage;
         private onValidateInput;
         private onValidateSelection;

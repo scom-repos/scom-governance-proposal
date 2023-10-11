@@ -143,7 +143,6 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     }
     async handleClickStart() {
         if (!this.hasEnoughStake) return;
-        this.executionProperties.action = 'restrictedOracle';
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
         if (this.state.handleNextFlowStep)

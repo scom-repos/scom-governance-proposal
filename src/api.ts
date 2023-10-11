@@ -137,6 +137,14 @@ export async function doNewVote(
     const governance = new Contracts.OAXDEX_Governance(wallet, Addresses.OAXDEX_Governance);
     let event = governance.parseNewVoteEvent(receipt)[0];
     result = event?.vote || '';
-    console.log(result)
     return result;
+}
+
+export function parseNewVoteEvent(state: State, receipt: TransactionReceipt) {
+    const wallet: any = Wallet.getClientInstance();
+    const chainId = state.getChainId();
+    const govAddress = state.getAddresses(chainId).OAXDEX_Governance;
+    const governance = new Contracts.OAXDEX_Governance(wallet, govAddress);
+    let event = governance.parseNewVoteEvent(receipt)[0];
+    return event?.vote || '';
 }

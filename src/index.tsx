@@ -27,19 +27,12 @@ import { isAddressValid, isClientWalletConnected, nullAddress, State } from "./s
 import configData from './data.json';
 import { Constants, Wallet } from "@ijstech/eth-wallet";
 import customStyles from './index.css';
-import { doNewVote, getPair, getVotingValue, stakeOf } from "./api";
+import { doNewVote, getPair, getVotingValue, parseNewVoteEvent, stakeOf } from "./api";
 import { ITokenObject, tokenStore } from "@scom/scom-token-list";
 import formSchema from './formSchema';
 import ScomGovernanceProposalFlowInitialSetup from "./flow/initialSetup";
 
 const Theme = Styles.Theme.ThemeVars;
-
-const actions = [
-    {
-        label: 'Modify Restricted Oracle',
-        value: 'restrictedOracle'
-    }
-]
 
 interface ScomGovernanceProposalElement extends ControlElement {
     lazyLoad?: boolean;
@@ -61,10 +54,7 @@ declare global {
 export default class GovernanceProposal extends Module {
     private dappContainer: ScomDappContainer;
     private loadingElm: Panel;
-    private actionSelect: ComboBox;
-    private actionErr: Label;
     private lblMinVotingBalance: Label;
-    private firstAddressStack: VStack;
     private actionStack: VStack;
     private tokenPairStack: VStack;
     private firstTokenSelection: ScomTokenInput;
@@ -86,7 +76,6 @@ export default class GovernanceProposal extends Module {
     private thresholdInput: Input;
     private thresholdErr: Label;
     private btnConfirm: Button;
-    private systemStack: VStack;
     private proposalAlert: Alert;
     private txStatusModal: ScomTxStatusModal;
     private mdWallet: ScomWalletModal;
@@ -106,7 +95,6 @@ export default class GovernanceProposal extends Module {
     private dayInSeconds = 24 * 60 * 60;
 
     private form: IProposalForm = {
-        action: '',
         duration: 0,
         quorum: 0,
         value: '',
@@ -229,9 +217,6 @@ export default class GovernanceProposal extends Module {
     }
     set showHeader(value: boolean) {
         this._data.showHeader = value;
-    }
-    private get isTokenPairInputShown() {
-        return this.form.action === 'oracle' || this.form.action === 'restrictedOracle' || this.form.action === 'peggedOracle' || this.form.action === 'otcOracle';
     }
 
     private get hasEnoughStake() {
@@ -543,10 +528,6 @@ export default class GovernanceProposal extends Module {
             const tokens = tokenStore.getTokenList(chainId);
             this.firstTokenSelection.tokenDataListProp = tokens;
             this.secondTokenSelection.tokenDataListProp = tokens;
-            if (this._data.action) {
-                this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
-                this.onChangeAction(this.actionSelect);
-            }
             if (this._data.fromToken) {
                 this.firstTokenSelection.address = this._data.fromToken;
                 this.onSelectFirstToken(this.firstTokenSelection.token);
@@ -603,19 +584,6 @@ export default class GovernanceProposal extends Module {
         if (rpcWallet.address) {
             if (!this.isEmptyData(this._data)) await tokenStore.updateAllTokenBalances(rpcWallet);
         }
-    }
-
-    private onChangeAction(source: ComboBox) {
-        this.form.action = (source.selectedItem as IComboItem).value;
-        this.validateStatus.action = true;
-        if (this.actionErr) this.actionErr.visible = false;
-        this.actionStack.visible = this.tokenPairStack.visible = this.isTokenPairInputShown;
-        this.firstTokenSelection.token = null;
-        this.secondTokenSelection.token = null;
-        this.form.firstToken = undefined;
-        this.form.secondToken = undefined;
-        this.firstTokenSelection.classList.remove('has-token');
-        this.secondTokenSelection.classList.remove('has-token');
     }
 
     private getErrorMessage(name: string, callback: any) {
@@ -750,7 +718,6 @@ export default class GovernanceProposal extends Module {
 
         try {
             const delayInSeconds = this.form.delay;
-            const action = (this.actionSelect.selectedItem as IComboItem).label;
             const chainId = this.chainId;
             this.showResultMessage('warning', 'Creating new Executive Proposal');
 
@@ -764,17 +731,19 @@ export default class GovernanceProposal extends Module {
     
             const confirmationCallback = async (receipt: any) => {
                 if (this.state.handleAddTransactions) {
+                    const address = parseNewVoteEvent(this.state, receipt);
                     const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                     const transactionsInfoArr = [
                         {
-                            desc: 'Create Executive Proposal - ' + action,
+                            desc: 'Create Pair Executive Proposal',
                             chainId: chainId,
                             fromToken: null,
                             toToken: null,
                             fromTokenAmount: '-',
                             toTokenAmount: '-',
                             hash: receipt.transactionHash,
-                            timestamp
+                            timestamp,
+                            value: address
                         }
                     ];
                     this.state.handleAddTransactions({
@@ -816,7 +785,6 @@ export default class GovernanceProposal extends Module {
 
     private getCheckingProps() {
         const {
-            action,
             duration,
             quorum,
             delay,
@@ -825,7 +793,6 @@ export default class GovernanceProposal extends Module {
             secondToken,
         } = this.validateStatus;
         let result: any = {
-            action,
             duration,
             quorum,
             delay,
@@ -885,42 +852,13 @@ export default class GovernanceProposal extends Module {
                             margin={{ left: 'auto', right: 'auto' }}
                             gap="1rem"
                         >
-                            <i-hstack width="100%" horizontalAlignment="center" margin={{ bottom: '1.25rem', left: 'auto', right: 'auto' }}>
-                                <i-label caption="Create new executive proposal" font={{ size: 'clamp(1.5rem, 1.4rem + 0.5vw, 2rem)', bold: true, color: Theme.text.third }}></i-label>
-                            </i-hstack>
                             <i-vstack
                                 width="100%"
                                 padding={{ top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }}
                                 gap="1rem"
                             >
-                                <i-hstack width="100%" gap="1rem" wrap="wrap">
-                                    <i-vstack gap='0.5rem' stack={{ grow: '1', shrink: '0', basis: '330px' }}>
-                                        <i-hstack verticalAlignment="center" gap="4px">
-                                            <i-label caption="*" font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
-                                            <i-label caption="Action" font={{ size: '1rem', weight: 600 }}></i-label>
-                                        </i-hstack>
-                                        <i-combo-box
-                                            id="actionSelect"
-                                            class="custom-combobox"
-                                            height={32}
-                                            minWidth={180}
-                                            margin={{ top: '1rem' }}
-                                            border={{ bottom: { width: '1px', style: 'solid', color: Theme.colors.primary.main } }}
-                                            icon={{ name: "angle-down", fill: Theme.text.third, width: 12, height: 12 }}
-                                            font={{ size: '0.875rem' }}
-                                            items={actions}
-                                            onChanged={this.onChangeAction.bind(this)}
-                                        ></i-combo-box>
-                                        <i-hstack horizontalAlignment="space-between">
-                                            <i-label id="actionErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
-                                            <i-label id="lblMinVotingBalance" font={{ size: '0.875rem' }} margin={{ left: 'auto' }}></i-label>
-                                        </i-hstack>
-                                    </i-vstack>
-                                    <i-vstack id="systemStack" width="100%" gap="0.5rem" stack={{ grow: '1', shrink: '0', basis: '330px' }} visible={false}></i-vstack>
-                                </i-hstack>
-                                <i-vstack id="firstAddressStack" width="100%" gap="0.5rem" visible={false}></i-vstack>
                                 <i-vstack id="actionStack">
-                                    <i-vstack id="tokenPairStack" gap='0.5rem' width="100%" visible={false}>
+                                    <i-vstack id="tokenPairStack" gap='0.5rem' width="100%">
                                         <i-hstack verticalAlignment="center" gap="4px">
                                             <i-label caption='*' font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label caption='Select a pair' font={{ size: '1rem', weight: 600 }}></i-label>
@@ -954,6 +892,9 @@ export default class GovernanceProposal extends Module {
                                                 ></i-scom-token-input>
                                                 <i-label id="secondTokenErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
                                             </i-vstack>
+                                        </i-hstack>
+                                        <i-hstack horizontalAlignment="space-between">
+                                            <i-label id="lblMinVotingBalance" font={{ size: '0.875rem' }} margin={{ left: 'auto' }}></i-label>
                                         </i-hstack>
                                     </i-vstack>
                                 </i-vstack>

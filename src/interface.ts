@@ -15,13 +15,11 @@ export interface IGovernanceProposal {
     networks: INetworkConfig[];
     defaultChainId?: number;
     showHeader?: boolean;
-    action?: string;
     fromToken?: string;
     toToken?: string;
 }
 
 export interface IValidateStatus {
-    action?: boolean;
     duration?: boolean;
     quorum?: boolean;
     delay?: boolean;
@@ -36,7 +34,6 @@ export interface IValidateStatus {
 }
 
 export interface IProposalForm {
-    action: string;
     duration: number;
     quorum: number;
     value: string;

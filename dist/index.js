@@ -333,7 +333,7 @@ define("@scom/scom-governance-proposal/index.css.ts", ["require", "exports", "@i
 define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/oswap-openswap-contract", "@scom/scom-governance-proposal/store/index.ts"], function (require, exports, eth_wallet_2, oswap_openswap_contract_1, index_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.doNewVote = exports.getPair = exports.getVotingValue = exports.stakeOf = void 0;
+    exports.parseNewVoteEvent = exports.doNewVote = exports.getPair = exports.getVotingValue = exports.stakeOf = void 0;
     const Factory = "OAXDEX_Factory";
     const OracleFactory = "OSWAP_OracleFactory";
     const Pair = "OSWAP_Pair";
@@ -455,10 +455,18 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, Addresses.OAXDEX_Governance);
         let event = governance.parseNewVoteEvent(receipt)[0];
         result = (event === null || event === void 0 ? void 0 : event.vote) || '';
-        console.log(result);
         return result;
     }
     exports.doNewVote = doNewVote;
+    function parseNewVoteEvent(state, receipt) {
+        const wallet = eth_wallet_2.Wallet.getClientInstance();
+        const chainId = state.getChainId();
+        const govAddress = state.getAddresses(chainId).OAXDEX_Governance;
+        const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, govAddress);
+        let event = governance.parseNewVoteEvent(receipt)[0];
+        return (event === null || event === void 0 ? void 0 : event.vote) || '';
+    }
+    exports.parseNewVoteEvent = parseNewVoteEvent;
 });
 define("@scom/scom-governance-proposal/formSchema.ts", ["require", "exports", "@scom/scom-network-picker"], function (require, exports, scom_network_picker_1) {
     "use strict";
@@ -629,7 +637,6 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             var _a, _b, _c, _d;
             if (!this.hasEnoughStake)
                 return;
-            this.executionProperties.action = 'restrictedOracle';
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
             if (this.state.handleNextFlowStep)
@@ -672,12 +679,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_5.Styles.Theme.ThemeVars;
-    const actions = [
-        {
-            label: 'Modify Restricted Oracle',
-            value: 'restrictedOracle'
-        }
-    ];
     let GovernanceProposal = class GovernanceProposal extends components_5.Module {
         get chainId() {
             return this.state.getChainId();
@@ -709,9 +710,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         set showHeader(value) {
             this._data.showHeader = value;
         }
-        get isTokenPairInputShown() {
-            return this.form.action === 'oracle' || this.form.action === 'restrictedOracle' || this.form.action === 'peggedOracle' || this.form.action === 'otcOracle';
-        }
         get hasEnoughStake() {
             return this.currentStake >= this.minThreshold;
         }
@@ -734,7 +732,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this.dayValueDefault = 7;
             this.dayInSeconds = 24 * 60 * 60;
             this.form = {
-                action: '',
                 duration: 0,
                 quorum: 0,
                 value: '',
@@ -877,10 +874,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
                     this.firstTokenSelection.tokenDataListProp = tokens;
                     this.secondTokenSelection.tokenDataListProp = tokens;
-                    if (this._data.action) {
-                        this.actionSelect.selectedItem = actions.find(action => action.value === this._data.action);
-                        this.onChangeAction(this.actionSelect);
-                    }
                     if (this._data.fromToken) {
                         this.firstTokenSelection.address = this._data.fromToken;
                         this.onSelectFirstToken(this.firstTokenSelection.token);
@@ -959,7 +952,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 exeCmd = 'oracle';
                 try {
                     const delayInSeconds = this.form.delay;
-                    const action = this.actionSelect.selectedItem.label;
                     const chainId = this.chainId;
                     this.showResultMessage('warning', 'Creating new Executive Proposal');
                     const txHashCallback = async (err, receipt) => {
@@ -972,17 +964,19 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     };
                     const confirmationCallback = async (receipt) => {
                         if (this.state.handleAddTransactions) {
+                            const address = (0, api_2.parseNewVoteEvent)(this.state, receipt);
                             const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                             const transactionsInfoArr = [
                                 {
-                                    desc: 'Create Executive Proposal - ' + action,
+                                    desc: 'Create Pair Executive Proposal',
                                     chainId: chainId,
                                     fromToken: null,
                                     toToken: null,
                                     fromTokenAmount: '-',
                                     toTokenAmount: '-',
                                     hash: receipt.transactionHash,
-                                    timestamp
+                                    timestamp,
+                                    value: address
                                 }
                             ];
                             this.state.handleAddTransactions({
@@ -1239,19 +1233,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     await scom_token_list_3.tokenStore.updateAllTokenBalances(rpcWallet);
             }
         }
-        onChangeAction(source) {
-            this.form.action = source.selectedItem.value;
-            this.validateStatus.action = true;
-            if (this.actionErr)
-                this.actionErr.visible = false;
-            this.actionStack.visible = this.tokenPairStack.visible = this.isTokenPairInputShown;
-            this.firstTokenSelection.token = null;
-            this.secondTokenSelection.token = null;
-            this.form.firstToken = undefined;
-            this.form.secondToken = undefined;
-            this.firstTokenSelection.classList.remove('has-token');
-            this.secondTokenSelection.classList.remove('has-token');
-        }
         getErrorMessage(name, callback) {
             let message = '';
             switch (name) {
@@ -1350,9 +1331,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this.validateStatus.threshold = this.onValidateInput("threshold");
         }
         getCheckingProps() {
-            const { action, duration, quorum, delay, threshold, firstToken, secondToken, } = this.validateStatus;
+            const { duration, quorum, delay, threshold, firstToken, secondToken, } = this.validateStatus;
             let result = {
-                action,
                 duration,
                 quorum,
                 delay,
@@ -1397,22 +1377,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                 this.$render("i-icon", { class: "i-loading-spinner_icon", image: { url: assets_1.default.fullPath('img/loading.svg'), width: 36, height: 36 } }),
                                 this.$render("i-label", { caption: "Loading...", font: { color: '#FD4A4C', size: '1.5em' }, class: "i-loading-spinner_text" }))),
                         this.$render("i-vstack", { width: "100%", height: "100%", maxWidth: 1200, padding: { top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }, margin: { left: 'auto', right: 'auto' }, gap: "1rem" },
-                            this.$render("i-hstack", { width: "100%", horizontalAlignment: "center", margin: { bottom: '1.25rem', left: 'auto', right: 'auto' } },
-                                this.$render("i-label", { caption: "Create new executive proposal", font: { size: 'clamp(1.5rem, 1.4rem + 0.5vw, 2rem)', bold: true, color: Theme.text.third } })),
                             this.$render("i-vstack", { width: "100%", padding: { top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }, gap: "1rem" },
-                                this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
-                                    this.$render("i-vstack", { gap: '0.5rem', stack: { grow: '1', shrink: '0', basis: '330px' } },
-                                        this.$render("i-hstack", { verticalAlignment: "center", gap: "4px" },
-                                            this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
-                                            this.$render("i-label", { caption: "Action", font: { size: '1rem', weight: 600 } })),
-                                        this.$render("i-combo-box", { id: "actionSelect", class: "custom-combobox", height: 32, minWidth: 180, margin: { top: '1rem' }, border: { bottom: { width: '1px', style: 'solid', color: Theme.colors.primary.main } }, icon: { name: "angle-down", fill: Theme.text.third, width: 12, height: 12 }, font: { size: '0.875rem' }, items: actions, onChanged: this.onChangeAction.bind(this) }),
-                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
-                                            this.$render("i-label", { id: "actionErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
-                                            this.$render("i-label", { id: "lblMinVotingBalance", font: { size: '0.875rem' }, margin: { left: 'auto' } }))),
-                                    this.$render("i-vstack", { id: "systemStack", width: "100%", gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' }, visible: false })),
-                                this.$render("i-vstack", { id: "firstAddressStack", width: "100%", gap: "0.5rem", visible: false }),
                                 this.$render("i-vstack", { id: "actionStack" },
-                                    this.$render("i-vstack", { id: "tokenPairStack", gap: '0.5rem', width: "100%", visible: false },
+                                    this.$render("i-vstack", { id: "tokenPairStack", gap: '0.5rem', width: "100%" },
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: "4px" },
                                             this.$render("i-label", { caption: '*', font: { size: '0.875rem', color: Theme.colors.primary.main } }),
                                             this.$render("i-label", { caption: 'Select a pair', font: { size: '1rem', weight: 600 } })),
@@ -1422,7 +1389,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                                 this.$render("i-label", { id: "firstTokenErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false })),
                                             this.$render("i-vstack", { horizontalAlignment: "start", gap: "0.5rem" },
                                                 this.$render("i-scom-token-input", { id: "secondTokenSelection", class: "custom-token-selection", width: "auto", height: 34, type: "button", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, onSelectToken: this.onSelectSecondToken.bind(this) }),
-                                                this.$render("i-label", { id: "secondTokenErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }))))),
+                                                this.$render("i-label", { id: "secondTokenErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }))),
+                                        this.$render("i-hstack", { horizontalAlignment: "space-between" },
+                                            this.$render("i-label", { id: "lblMinVotingBalance", font: { size: '0.875rem' }, margin: { left: 'auto' } })))),
                                 this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
                                     this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
