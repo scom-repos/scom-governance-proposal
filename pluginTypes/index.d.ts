@@ -1,5 +1,7 @@
 /// <reference path="@scom/scom-dapp-container/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-wallet/index.d.ts" />
+/// <reference path="@scom/scom-token-input/@ijstech/eth-wallet/index.d.ts" />
+/// <reference path="@scom/scom-token-input/@scom/scom-token-modal/@ijstech/eth-wallet/index.d.ts" />
 /// <amd-module name="@scom/scom-governance-proposal/interface.ts" />
 declare module "@scom/scom-governance-proposal/interface.ts" {
     import { INetworkConfig } from "@scom/scom-network-picker";
