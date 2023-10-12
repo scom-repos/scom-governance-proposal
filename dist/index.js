@@ -1230,7 +1230,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             const rpcWallet = this.state.getRpcWallet();
             if (rpcWallet.address) {
                 if (!this.isEmptyData(this._data))
-                    await scom_token_list_3.tokenStore.updateAllTokenBalances(rpcWallet);
+                    await scom_token_list_3.tokenStore.updateTokenBalancesByChainId(this.chainId);
             }
         }
         getErrorMessage(name, callback) {
