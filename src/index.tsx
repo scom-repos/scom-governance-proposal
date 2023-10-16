@@ -730,8 +730,8 @@ export default class GovernanceProposal extends Module {
             }
     
             const confirmationCallback = async (receipt: any) => {
+                const address = parseNewVoteEvent(this.state, receipt);
                 if (this.state.handleAddTransactions) {
-                    const address = parseNewVoteEvent(this.state, receipt);
                     const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                     const transactionsInfoArr = [
                         {
@@ -749,6 +749,15 @@ export default class GovernanceProposal extends Module {
                     this.state.handleAddTransactions({
                         list: transactionsInfoArr
                     });
+                }
+                if (this.state.handleJumpToStep) {
+                    this.state.handleJumpToStep({
+                        widgetName: 'scom-governance-voting',
+                        executionProperties: {
+                            votingAddress: address || '',
+                            isFlow: true
+                        }
+                    })
                 }
             };
     
@@ -1033,6 +1042,7 @@ export default class GovernanceProposal extends Module {
             let tokenRequirements = options.tokenRequirements;
             this.state.handleNextFlowStep = options.onNextStep;
             this.state.handleAddTransactions = options.onAddTransactions;
+            this.state.handleJumpToStep = options.onJumpToStep;
             await widget.setData({
                 executionProperties: properties,
                 tokenRequirements
@@ -1045,6 +1055,7 @@ export default class GovernanceProposal extends Module {
 			let tag = options.tag;
             this.state.handleNextFlowStep = options.onNextStep;
             this.state.handleAddTransactions = options.onAddTransactions;
+            this.state.handleJumpToStep = options.onJumpToStep;
 			await this.setData(properties);
 			if (tag) {
 				this.setTag(tag);
