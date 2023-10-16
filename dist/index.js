@@ -953,6 +953,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 try {
                     const delayInSeconds = this.form.delay;
                     const chainId = this.chainId;
+                    const firstToken = (fromToken === null || fromToken === void 0 ? void 0 : fromToken.address) || (fromToken === null || fromToken === void 0 ? void 0 : fromToken.symbol);
+                    const secondToken = (toToken === null || toToken === void 0 ? void 0 : toToken.address) || (toToken === null || toToken === void 0 ? void 0 : toToken.symbol);
                     this.showResultMessage('warning', 'Creating new Executive Proposal');
                     const txHashCallback = async (err, receipt) => {
                         if (err) {
@@ -964,6 +966,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     };
                     const confirmationCallback = async (receipt) => {
                         const address = (0, api_2.parseNewVoteEvent)(this.state, receipt);
+                        if (!address)
+                            return;
                         if (this.state.handleAddTransactions) {
                             const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                             const transactionsInfoArr = [
@@ -987,7 +991,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             this.state.handleJumpToStep({
                                 widgetName: 'scom-governance-voting',
                                 executionProperties: {
-                                    votingAddress: address || '',
+                                    votingAddress: address,
+                                    fromToken: firstToken || '',
+                                    toToken: secondToken || '',
                                     isFlow: true
                                 }
                             });

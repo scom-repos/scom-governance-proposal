@@ -719,6 +719,8 @@ export default class GovernanceProposal extends Module {
         try {
             const delayInSeconds = this.form.delay;
             const chainId = this.chainId;
+            const firstToken = fromToken?.address || fromToken?.symbol;
+            const secondToken = toToken?.address || toToken?.symbol;
             this.showResultMessage('warning', 'Creating new Executive Proposal');
 
             const txHashCallback = async (err: Error, receipt?: string) => {
@@ -731,6 +733,7 @@ export default class GovernanceProposal extends Module {
     
             const confirmationCallback = async (receipt: any) => {
                 const address = parseNewVoteEvent(this.state, receipt);
+                if (!address) return;
                 if (this.state.handleAddTransactions) {
                     const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                     const transactionsInfoArr = [
@@ -754,7 +757,9 @@ export default class GovernanceProposal extends Module {
                     this.state.handleJumpToStep({
                         widgetName: 'scom-governance-voting',
                         executionProperties: {
-                            votingAddress: address || '',
+                            votingAddress: address,
+                            fromToken: firstToken || '',
+                            toToken: secondToken || '',
                             isFlow: true
                         }
                     })
