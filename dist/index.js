@@ -963,8 +963,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         }
                     };
                     const confirmationCallback = async (receipt) => {
+                        const address = (0, api_2.parseNewVoteEvent)(this.state, receipt);
                         if (this.state.handleAddTransactions) {
-                            const address = (0, api_2.parseNewVoteEvent)(this.state, receipt);
                             const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                             const transactionsInfoArr = [
                                 {
@@ -981,6 +981,15 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             ];
                             this.state.handleAddTransactions({
                                 list: transactionsInfoArr
+                            });
+                        }
+                        if (this.state.handleJumpToStep) {
+                            this.state.handleJumpToStep({
+                                widgetName: 'scom-governance-voting',
+                                executionProperties: {
+                                    votingAddress: address || '',
+                                    isFlow: true
+                                }
                             });
                         }
                     };
@@ -1445,6 +1454,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 let tokenRequirements = options.tokenRequirements;
                 this.state.handleNextFlowStep = options.onNextStep;
                 this.state.handleAddTransactions = options.onAddTransactions;
+                this.state.handleJumpToStep = options.onJumpToStep;
                 await widget.setData({
                     executionProperties: properties,
                     tokenRequirements
@@ -1458,6 +1468,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 let tag = options.tag;
                 this.state.handleNextFlowStep = options.onNextStep;
                 this.state.handleAddTransactions = options.onAddTransactions;
+                this.state.handleJumpToStep = options.onJumpToStep;
                 await this.setData(properties);
                 if (tag) {
                     this.setTag(tag);

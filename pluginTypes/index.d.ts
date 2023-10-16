@@ -83,6 +83,7 @@ declare module "@scom/scom-governance-proposal/store/utils.ts" {
         approvalModel: ERC20ApprovalModel;
         handleNextFlowStep: (data: any) => Promise<void>;
         handleAddTransactions: (data: any) => Promise<void>;
+        handleJumpToStep: (data: any) => Promise<void>;
         constructor(options: any);
         private initData;
         initRpcWallet(defaultChainId: number): string;
