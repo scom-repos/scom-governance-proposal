@@ -17,6 +17,7 @@ export interface IGovernanceProposal {
     showHeader?: boolean;
     fromToken?: string;
     toToken?: string;
+    isFlow?: boolean;
 }
 
 export interface IValidateStatus {

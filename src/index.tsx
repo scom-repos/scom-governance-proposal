@@ -782,7 +782,7 @@ export default class GovernanceProposal extends Module {
                 exeParams1,
                 exeParams2
             );
-            if (result) {
+            if (result && !this._data.isFlow) {
                 this.proposalAlert.status = "success";
                 this.proposalAlert.title = "Voting Address";
                 this.proposalAlert.content = result;
