@@ -8,9 +8,9 @@ import {
     Module,
     Styles
 } from "@ijstech/components";
-import { isClientWalletConnected, State } from "../store/index";
+import { formatNumber, isClientWalletConnected, State } from "../store/index";
 import ScomWalletModal from "@scom/scom-wallet-modal";
-import { Constants, IEventBusRegistry, Wallet } from "@ijstech/eth-wallet";
+import { BigNumber, Constants, IEventBusRegistry, Wallet } from "@ijstech/eth-wallet";
 import ScomTokenInput from "@scom/scom-token-input";
 import { tokenStore } from "@scom/scom-token-list";
 import { getVotingValue, stakeOf } from "../api";
@@ -46,7 +46,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
     private executionProperties: any;
     private walletEvents: IEventBusRegistry[] = [];
     private minThreshold: number = 0;
-    private votingBalance: number = 0;
+    private votingBalance: BigNumber = new BigNumber(0);
 
     get state(): State {
         return this._state;
@@ -61,7 +61,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         return this.executionProperties.chainId || this.executionProperties.defaultChainId;
     }
     private get hasEnoughStake() {
-        return this.votingBalance >= this.minThreshold;
+        return this.votingBalance.gte(this.minThreshold);
     }
     private async resetRpcWallet() {
         await this.state.initRpcWallet(this.chainId);
@@ -91,9 +91,9 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.toTokenInput.tokenDataListProp = tokens;
         const paramValueObj = await getVotingValue(this.state, 'vote');
         this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
-        this.votingBalance = (await stakeOf(this.state, this.rpcWallet.account.address)).toNumber();
-        this.lblMinVotingBalance.caption = FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 });
-        this.lblVotingBalance.caption = FormatUtils.formatNumber(this.votingBalance, { decimalFigures: 4 });
+        this.votingBalance = await stakeOf(this.state, this.rpcWallet.account.address);
+        this.lblMinVotingBalance.caption = formatNumber(this.minThreshold);
+        this.lblVotingBalance.caption = formatNumber(this.votingBalance);
         this.lblBalanceErr.visible = !this.hasEnoughStake;
         this.btnStart.enabled = this.hasEnoughStake;
     }

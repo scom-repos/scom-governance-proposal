@@ -1,5 +1,5 @@
-import { application } from "@ijstech/components";
-import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
+import { application, FormatUtils } from "@ijstech/components";
+import { BigNumber, ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
 import getNetworkList from "@scom/scom-network-list";
 import { ITokenObject, WETHByChainId } from "@scom/scom-token-list";
 import { coreAddress } from "./core";
@@ -126,4 +126,10 @@ export const isAddressValid = (address: string) => {
   let wallet:any = Wallet.getClientInstance();
   const isValid = wallet.web3.utils.isAddress(address);
   return isValid;
+}
+
+export function formatNumber(value: number | string | BigNumber, decimalFigures?: number) {
+  decimalFigures = decimalFigures || 4;
+  const newValue = typeof value === 'object' ? value.toFixed(decimalFigures) : new BigNumber(value).toFixed(decimalFigures);
+  return FormatUtils.formatNumber(newValue, { decimalFigures: decimalFigures });
 }

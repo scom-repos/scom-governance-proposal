@@ -118,7 +118,7 @@ define("@scom/scom-governance-proposal/store/core.ts", ["require", "exports"], f
 define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-network-list", "@scom/scom-token-list", "@scom/scom-governance-proposal/store/core.ts"], function (require, exports, components_2, eth_wallet_1, scom_network_list_1, scom_token_list_1, core_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.isAddressValid = exports.getWETH = exports.isClientWalletConnected = exports.State = void 0;
+    exports.formatNumber = exports.isAddressValid = exports.getWETH = exports.isClientWalletConnected = exports.State = void 0;
     class State {
         constructor(options) {
             this.infuraId = '';
@@ -226,6 +226,12 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
         return isValid;
     };
     exports.isAddressValid = isAddressValid;
+    function formatNumber(value, decimalFigures) {
+        decimalFigures = decimalFigures || 4;
+        const newValue = typeof value === 'object' ? value.toFixed(decimalFigures) : new eth_wallet_1.BigNumber(value).toFixed(decimalFigures);
+        return components_2.FormatUtils.formatNumber(newValue, { decimalFigures: decimalFigures });
+    }
+    exports.formatNumber = formatNumber;
 });
 define("@scom/scom-governance-proposal/store/index.ts", ["require", "exports", "@scom/scom-governance-proposal/store/utils.ts"], function (require, exports, utils_1) {
     "use strict";
@@ -538,7 +544,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             super(...arguments);
             this.walletEvents = [];
             this.minThreshold = 0;
-            this.votingBalance = 0;
+            this.votingBalance = new eth_wallet_3.BigNumber(0);
         }
         get state() {
             return this._state;
@@ -553,7 +559,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             return this.executionProperties.chainId || this.executionProperties.defaultChainId;
         }
         get hasEnoughStake() {
-            return this.votingBalance >= this.minThreshold;
+            return this.votingBalance.gte(this.minThreshold);
         }
         async resetRpcWallet() {
             await this.state.initRpcWallet(this.chainId);
@@ -584,9 +590,9 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             this.toTokenInput.tokenDataListProp = tokens;
             const paramValueObj = await (0, api_1.getVotingValue)(this.state, 'vote');
             this.minThreshold = paramValueObj.minOaxTokenToCreateVote;
-            this.votingBalance = (await (0, api_1.stakeOf)(this.state, this.rpcWallet.account.address)).toNumber();
-            this.lblMinVotingBalance.caption = components_4.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 });
-            this.lblVotingBalance.caption = components_4.FormatUtils.formatNumber(this.votingBalance, { decimalFigures: 4 });
+            this.votingBalance = await (0, api_1.stakeOf)(this.state, this.rpcWallet.account.address);
+            this.lblMinVotingBalance.caption = (0, index_2.formatNumber)(this.minThreshold);
+            this.lblVotingBalance.caption = (0, index_2.formatNumber)(this.votingBalance);
             this.lblBalanceErr.visible = !this.hasEnoughStake;
             this.btnStart.enabled = this.hasEnoughStake;
         }
@@ -711,7 +717,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this._data.showHeader = value;
         }
         get hasEnoughStake() {
-            return this.currentStake >= this.minThreshold;
+            return this.currentStake.gte(this.minThreshold);
         }
         get isValidToCreateVote() {
             return this.hasEnoughStake;
@@ -728,7 +734,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this.minQuorum = 0;
             this.minThreshold = 0;
             this.minDelay = 0;
-            this.currentStake = 0;
+            this.currentStake = new eth_wallet_4.BigNumber(0);
             this.dayValueDefault = 7;
             this.dayInSeconds = 24 * 60 * 60;
             this.form = {
@@ -836,7 +842,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 let paramValueObj = await (0, api_2.getVotingValue)(this.state, 'vote');
                 const wallet = this.state.getRpcWallet();
                 const selectedAddress = wallet.account.address;
-                this.currentStake = (await (0, api_2.stakeOf)(this.state, selectedAddress)).toNumber();
+                this.currentStake = await (0, api_2.stakeOf)(this.state, selectedAddress);
                 const extraSecs = 60;
                 this.maxVoteDurationInDays = paramValueObj.maxVoteDuration || 0;
                 this.minVoteDurationInDays = paramValueObj.minVoteDuration ? paramValueObj.minVoteDuration + extraSecs : 0;
@@ -883,7 +889,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         this.onSelectSecondToken(this.secondTokenSelection.token);
                     }
                     const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
-                    this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${components_5.FormatUtils.formatNumber(this.minThreshold, { decimalFigures: 4 })} ${tokenSymbol}`;
+                    this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${(0, index_3.formatNumber)(this.minThreshold)} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
                     this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
                     this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
@@ -1005,7 +1011,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         confirmation: confirmationCallback
                     });
                     let result = await (0, api_2.doNewVote)(this.state, this.form.quorum, this.form.threshold, voteEndTime, delayInSeconds, exeCmd, exeParams1, exeParams2);
-                    if (result) {
+                    if (result && !this._data.isFlow) {
                         this.proposalAlert.status = "success";
                         this.proposalAlert.title = "Voting Address";
                         this.proposalAlert.content = result;

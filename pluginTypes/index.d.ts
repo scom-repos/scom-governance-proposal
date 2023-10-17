@@ -19,6 +19,7 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         showHeader?: boolean;
         fromToken?: string;
         toToken?: string;
+        isFlow?: boolean;
     }
     export interface IValidateStatus {
         duration?: boolean;
@@ -72,7 +73,7 @@ declare module "@scom/scom-governance-proposal/store/core.ts" {
 }
 /// <amd-module name="@scom/scom-governance-proposal/store/utils.ts" />
 declare module "@scom/scom-governance-proposal/store/utils.ts" {
-    import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork } from "@ijstech/eth-wallet";
+    import { BigNumber, ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork } from "@ijstech/eth-wallet";
     import { ITokenObject } from "@scom/scom-token-list";
     export class State {
         infuraId: string;
@@ -98,6 +99,7 @@ declare module "@scom/scom-governance-proposal/store/utils.ts" {
     export function isClientWalletConnected(): boolean;
     export const getWETH: (chainId: number) => ITokenObject;
     export const isAddressValid: (address: string) => any;
+    export function formatNumber(value: number | string | BigNumber, decimalFigures?: number): string;
 }
 /// <amd-module name="@scom/scom-governance-proposal/store/index.ts" />
 declare module "@scom/scom-governance-proposal/store/index.ts" {
@@ -350,6 +352,7 @@ declare module "@scom/scom-governance-proposal" {
                 showHeader?: boolean;
                 fromToken?: string;
                 toToken?: string;
+                isFlow?: boolean;
             }>;
             setData: (properties: IGovernanceProposal, linkParams?: Record<string, any>) => Promise<void>;
             getTag: any;

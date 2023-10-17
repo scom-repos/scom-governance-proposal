@@ -23,9 +23,9 @@ import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal, { IWalletPlugin } from "@scom/scom-wallet-modal";
 import { IGovernanceProposal, IProposalForm, IValidateStatus, QueueType } from "./interface";
 import Assets from './assets';
-import { isAddressValid, isClientWalletConnected, nullAddress, State } from "./store/index";
+import { formatNumber, isAddressValid, isClientWalletConnected, nullAddress, State } from "./store/index";
 import configData from './data.json';
-import { Constants, Wallet } from "@ijstech/eth-wallet";
+import { BigNumber, Constants, Wallet } from "@ijstech/eth-wallet";
 import customStyles from './index.css';
 import { doNewVote, getPair, getVotingValue, parseNewVoteEvent, stakeOf } from "./api";
 import { ITokenObject, tokenStore } from "@scom/scom-token-list";
@@ -90,7 +90,7 @@ export default class GovernanceProposal extends Module {
     private minQuorum: number = 0;
     private minThreshold: number = 0;
     private minDelay: number = 0;
-    private currentStake: number = 0;
+    private currentStake: BigNumber = new BigNumber(0);
     private dayValueDefault: number = 7;
     private dayInSeconds = 24 * 60 * 60;
 
@@ -220,7 +220,7 @@ export default class GovernanceProposal extends Module {
     }
 
     private get hasEnoughStake() {
-        return this.currentStake >= this.minThreshold;
+        return this.currentStake.gte(this.minThreshold);
     }
 
     private get isValidToCreateVote() {
@@ -490,7 +490,7 @@ export default class GovernanceProposal extends Module {
         let paramValueObj = await getVotingValue(this.state, 'vote');
         const wallet = this.state.getRpcWallet();
         const selectedAddress = wallet.account.address;
-        this.currentStake = (await stakeOf(this.state, selectedAddress)).toNumber();
+        this.currentStake = await stakeOf(this.state, selectedAddress);
         const extraSecs = 60;
         this.maxVoteDurationInDays = paramValueObj.maxVoteDuration || 0;
         this.minVoteDurationInDays = paramValueObj.minVoteDuration ? paramValueObj.minVoteDuration + extraSecs : 0;
@@ -537,7 +537,7 @@ export default class GovernanceProposal extends Module {
                 this.onSelectSecondToken(this.secondTokenSelection.token);
             }
             const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
-            this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${FormatUtils.formatNumber(this.minThreshold, {decimalFigures:4})} ${tokenSymbol}`;
+            this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${formatNumber(this.minThreshold)} ${tokenSymbol}`;
             this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
             this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
             this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
