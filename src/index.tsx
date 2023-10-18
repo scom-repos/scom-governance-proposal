@@ -876,6 +876,11 @@ export default class GovernanceProposal extends Module {
                                         <i-hstack verticalAlignment="center" gap="4px">
                                             <i-label caption='*' font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label caption='Select a pair' font={{ size: '1rem', weight: 600 }}></i-label>
+                                            <i-icon
+                                                name="question-circle"
+                                                fill="#fff" width={16} height={16}
+                                                tooltip={{ content: 'The pair you want to register in the Oracle', placement: 'right' }}
+                                            ></i-icon>
                                         </i-hstack>
                                         <i-hstack gap="1rem">
                                             <i-vstack horizontalAlignment="start" gap="0.5rem">
@@ -917,6 +922,11 @@ export default class GovernanceProposal extends Module {
                                         <i-hstack verticalAlignment="center" gap={4}>
                                             <i-label caption="*" font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label id="lblDuration" caption="Duration" font={{ size: '1rem', weight: 600 }}></i-label>
+                                            <i-icon
+                                                name="question-circle"
+                                                fill="#fff" width={16} height={16}
+                                                tooltip={{ content: 'Vote Duration in seconds', placement: 'right' }}
+                                            ></i-icon>
                                         </i-hstack>
                                         <i-input
                                             id="durationInput"
@@ -941,6 +951,11 @@ export default class GovernanceProposal extends Module {
                                         <i-hstack verticalAlignment="center" gap={4}>
                                             <i-label caption="*" font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label id="lblDelay" caption="Delay" font={{ size: '1rem', weight: 600 }}></i-label>
+                                            <i-icon
+                                                name="question-circle"
+                                                fill="#fff" width={16} height={16}
+                                                tooltip={{ content: 'Execution Delay in seconds', placement: 'right' }}
+                                            ></i-icon>
                                         </i-hstack>
                                         <i-input
                                             id="delayInput"
@@ -967,6 +982,11 @@ export default class GovernanceProposal extends Module {
                                         <i-hstack verticalAlignment="center" gap={4}>
                                             <i-label caption="*" font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label caption="Quorum" font={{ size: '1rem', weight: 600 }}></i-label>
+                                            <i-icon
+                                                name="question-circle"
+                                                fill="#fff" width={16} height={16}
+                                                tooltip={{ content: 'The minimum quorum required for voting', placement: 'right' }}
+                                            ></i-icon>
                                         </i-hstack>
                                         <i-input
                                             id="quorumInput"
@@ -991,6 +1011,11 @@ export default class GovernanceProposal extends Module {
                                         <i-hstack verticalAlignment="center" gap={4}>
                                             <i-label caption="*" font={{ size: '0.875rem', color: Theme.colors.primary.main }}></i-label>
                                             <i-label caption="Threshold" font={{ size: '1rem', weight: 600 }}></i-label>
+                                            <i-icon
+                                                name="question-circle"
+                                                fill="#fff" width={16} height={16}
+                                                tooltip={{ content: 'The minimum quorum threshold should be reached to pass the executive proposal', placement: 'right' }}
+                                            ></i-icon>
                                         </i-hstack>
                                         <i-input
                                             id="thresholdInput"
