@@ -1043,19 +1043,13 @@ export default class GovernanceProposal extends Module {
             target.appendChild(widget);
             await widget.ready();
             widget.state = this.state;
-            let properties = options.properties;
-            let tokenRequirements = options.tokenRequirements;
-            this.state.handleNextFlowStep = options.onNextStep;
-            this.state.handleAddTransactions = options.onAddTransactions;
-            this.state.handleJumpToStep = options.onJumpToStep;
-            await widget.setData({
-                executionProperties: properties,
-                tokenRequirements
-            });
+            await widget.handleFlowStage(target, stage, options);
         } else {
             widget = this;
-            target.appendChild(widget);
-            await widget.ready();
+            if (!options.isWidgetConnected) {
+                target.appendChild(widget);
+                await widget.ready();
+            }
 			let properties = options.properties;
 			let tag = options.tag;
             this.state.handleNextFlowStep = options.onNextStep;

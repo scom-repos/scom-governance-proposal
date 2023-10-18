@@ -198,7 +198,7 @@ declare module "@scom/scom-governance-proposal/formSchema.ts" {
 }
 /// <amd-module name="@scom/scom-governance-proposal/flow/initialSetup.tsx" />
 declare module "@scom/scom-governance-proposal/flow/initialSetup.tsx" {
-    import { ControlElement, Module } from "@ijstech/components";
+    import { Control, ControlElement, Module } from "@ijstech/components";
     import { State } from "@scom/scom-governance-proposal/store/index.ts";
     interface ScomGovernanceProposalFlowInitialSetupElement extends ControlElement {
         data?: any;
@@ -242,6 +242,9 @@ declare module "@scom/scom-governance-proposal/flow/initialSetup.tsx" {
         init(): void;
         handleClickStart(): Promise<void>;
         render(): any;
+        handleFlowStage(target: Control, stage: string, options: any): Promise<{
+            widget: ScomGovernanceProposalFlowInitialSetup;
+        }>;
     }
 }
 /// <amd-module name="@scom/scom-governance-proposal" />
