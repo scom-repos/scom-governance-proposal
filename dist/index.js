@@ -645,6 +645,11 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
                 return;
             this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
             this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
+            if (this.state.handleUpdateStepStatus)
+                this.state.handleUpdateStepStatus({
+                    caption: "Completed",
+                    color: Theme.colors.success.main
+                });
             if (this.state.handleNextFlowStep)
                 this.state.handleNextFlowStep({
                     isInitialSetup: true,
@@ -683,6 +688,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
                 this.state.handleNextFlowStep = options.onNextStep;
                 this.state.handleAddTransactions = options.onAddTransactions;
                 this.state.handleJumpToStep = options.onJumpToStep;
+                this.state.handleUpdateStepStatus = options.onUpdateStepStatus;
                 await widget.setData({
                     executionProperties: properties,
                     tokenRequirements
@@ -1006,6 +1012,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             ];
                             this.state.handleAddTransactions({
                                 list: transactionsInfoArr
+                            });
+                        }
+                        if (this.state.handleUpdateStepStatus) {
+                            this.state.handleUpdateStepStatus({
+                                caption: "Completed",
+                                color: Theme.colors.success.main
                             });
                         }
                         if (this.state.handleJumpToStep) {
@@ -1495,6 +1507,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 this.state.handleNextFlowStep = options.onNextStep;
                 this.state.handleAddTransactions = options.onAddTransactions;
                 this.state.handleJumpToStep = options.onJumpToStep;
+                this.state.handleUpdateStepStatus = options.onUpdateStepStatus;
                 await this.setData(properties);
                 if (tag) {
                     this.setTag(tag);

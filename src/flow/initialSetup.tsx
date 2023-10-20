@@ -146,6 +146,11 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         if (!this.hasEnoughStake) return;
         this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
+        if (this.state.handleUpdateStepStatus)
+            this.state.handleUpdateStepStatus({
+                caption: "Completed",
+                color: Theme.colors.success.main
+            });
         if (this.state.handleNextFlowStep)
             this.state.handleNextFlowStep({
                 isInitialSetup: true,
@@ -219,6 +224,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
             this.state.handleNextFlowStep = options.onNextStep;
             this.state.handleAddTransactions = options.onAddTransactions;
             this.state.handleJumpToStep = options.onJumpToStep;
+            this.state.handleUpdateStepStatus = options.onUpdateStepStatus;
             await widget.setData({
                 executionProperties: properties,
                 tokenRequirements

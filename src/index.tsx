@@ -753,6 +753,12 @@ export default class GovernanceProposal extends Module {
                         list: transactionsInfoArr
                     });
                 }
+                if (this.state.handleUpdateStepStatus) {
+                    this.state.handleUpdateStepStatus({
+                        caption: "Completed",
+                        color: Theme.colors.success.main
+                    });
+                }
                 if (this.state.handleJumpToStep) {
                     this.state.handleJumpToStep({
                         widgetName: 'scom-governance-voting',
@@ -1080,6 +1086,7 @@ export default class GovernanceProposal extends Module {
             this.state.handleNextFlowStep = options.onNextStep;
             this.state.handleAddTransactions = options.onAddTransactions;
             this.state.handleJumpToStep = options.onJumpToStep;
+            this.state.handleUpdateStepStatus = options.onUpdateStepStatus;
 			await this.setData(properties);
 			if (tag) {
 				this.setTag(tag);
