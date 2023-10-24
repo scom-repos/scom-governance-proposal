@@ -974,6 +974,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 exeParams1 = [fromToken, toToken];
                 exeParams2 = undefined;
                 exeCmd = 'oracle';
+                const wallet = eth_wallet_4.Wallet.getClientInstance();
                 try {
                     const delayInSeconds = this.form.delay;
                     const chainId = this.chainId;
@@ -1017,6 +1018,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                 color: Theme.colors.success.main
                             });
                         }
+                        wallet.registerSendTxEvents({});
                         if (this.state.handleJumpToStep) {
                             this.state.handleJumpToStep({
                                 widgetName: 'scom-governance-voting',
@@ -1029,7 +1031,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             });
                         }
                     };
-                    const wallet = eth_wallet_4.Wallet.getClientInstance();
                     wallet.registerSendTxEvents({
                         transactionHash: txHashCallback,
                         confirmation: confirmationCallback
@@ -1045,6 +1046,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 catch (err) {
                     console.log('newVote', err);
                     this.showResultMessage('error', '');
+                    wallet.registerSendTxEvents({});
                 }
                 finally {
                     this.btnConfirm.rightIcon.spin = false;

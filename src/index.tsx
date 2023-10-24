@@ -715,6 +715,8 @@ export default class GovernanceProposal extends Module {
         exeParams1 = [fromToken, toToken];
         exeParams2 = undefined;
         exeCmd = 'oracle';
+        
+        const wallet = Wallet.getClientInstance();
 
         try {
             const delayInSeconds = this.form.delay;
@@ -759,6 +761,7 @@ export default class GovernanceProposal extends Module {
                         color: Theme.colors.success.main
                     });
                 }
+                wallet.registerSendTxEvents({});
                 if (this.state.handleJumpToStep) {
                     this.state.handleJumpToStep({
                         widgetName: 'scom-governance-voting',
@@ -771,8 +774,6 @@ export default class GovernanceProposal extends Module {
                     })
                 }
             };
-    
-            const wallet = Wallet.getClientInstance();
             wallet.registerSendTxEvents({
                 transactionHash: txHashCallback,
                 confirmation: confirmationCallback
@@ -797,6 +798,7 @@ export default class GovernanceProposal extends Module {
         } catch (err) {
             console.log('newVote', err);
             this.showResultMessage('error', '');
+            wallet.registerSendTxEvents({});
         } finally { 
             this.btnConfirm.rightIcon.spin = false;
             this.btnConfirm.rightIcon.visible = false;
