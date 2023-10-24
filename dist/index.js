@@ -136,17 +136,16 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
             }
         }
         initRpcWallet(defaultChainId) {
-            var _a, _b, _c;
             if (this.rpcWalletId) {
                 return this.rpcWalletId;
             }
             const clientWallet = eth_wallet_1.Wallet.getClientInstance();
-            const networkList = Object.values(((_a = components_2.application.store) === null || _a === void 0 ? void 0 : _a.networkMap) || []);
+            const networkList = Object.values(components_2.application.store?.networkMap || []);
             const instanceId = clientWallet.initRpcWallet({
                 networks: networkList,
                 defaultChainId,
-                infuraId: (_b = components_2.application.store) === null || _b === void 0 ? void 0 : _b.infuraId,
-                multicalls: (_c = components_2.application.store) === null || _c === void 0 ? void 0 : _c.multicalls
+                infuraId: components_2.application.store?.infuraId,
+                multicalls: components_2.application.store?.multicalls
             });
             this.rpcWalletId = instanceId;
             if (clientWallet.address) {
@@ -160,11 +159,11 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
         }
         isRpcWalletConnected() {
             const wallet = this.getRpcWallet();
-            return wallet === null || wallet === void 0 ? void 0 : wallet.isConnected;
+            return wallet?.isConnected;
         }
         getChainId() {
             const rpcWallet = this.getRpcWallet();
-            return rpcWallet === null || rpcWallet === void 0 ? void 0 : rpcWallet.chainId;
+            return rpcWallet?.chainId;
         }
         setNetworkList(networkList, infuraId) {
             const wallet = eth_wallet_1.Wallet.getClientInstance();
@@ -183,12 +182,18 @@ define("@scom/scom-governance-proposal/store/utils.ts", ["require", "exports", "
                         network.rpcUrls[i] = network.rpcUrls[i].replace(/{InfuraId}/g, infuraId);
                     }
                 }
-                this.networkMap[network.chainId] = Object.assign(Object.assign({}, networkInfo), network);
+                this.networkMap[network.chainId] = {
+                    ...networkInfo,
+                    ...network
+                };
                 wallet.setNetworkInfo(this.networkMap[network.chainId]);
             }
         }
         async setApprovalModelAction(options) {
-            const approvalOptions = Object.assign(Object.assign({}, options), { spenderAddress: '' });
+            const approvalOptions = {
+                ...options,
+                spenderAddress: ''
+            };
             let wallet = this.getRpcWallet();
             this.approvalModel = new eth_wallet_1.ERC20ApprovalModel(wallet, approvalOptions);
             let approvalModelAction = this.approvalModel.getAction();
@@ -356,12 +361,11 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
     const RestrictedFactory = "OSWAP_RestrictedFactory";
     const PeggedFactory = "OSWAP_PeggedOracleFactory";
     const mapTokenObjectSet = (state, obj) => {
-        var _a;
         let chainId = state.getChainId();
         const WETH9 = (0, index_1.getWETH)(chainId);
         for (let key in obj) {
             if (obj.hasOwnProperty(key)) {
-                if (!((_a = obj[key]) === null || _a === void 0 ? void 0 : _a.address))
+                if (!obj[key]?.address)
                     obj[key] = WETH9;
             }
         }
@@ -386,11 +390,10 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
     }
     exports.stakeOf = stakeOf;
     async function getVotingValue(state, param1) {
-        var _a;
         let result = {};
         const wallet = state.getRpcWallet();
         const chainId = state.getChainId();
-        const address = (_a = state.getAddresses(chainId)) === null || _a === void 0 ? void 0 : _a.OAXDEX_Governance;
+        const address = state.getAddresses(chainId)?.OAXDEX_Governance;
         if (address) {
             const govContract = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, address);
             const params = await govContract.getVotingParams(eth_wallet_2.Utils.stringToBytes32(param1));
@@ -412,7 +415,7 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         let params = { param1: tokens.tokenA.address, param2: tokens.tokenB.address };
         let factoryAddress = state.getAddresses(chainId).OSWAP_RestrictedFactory;
         let groupQ = new oswap_openswap_contract_1.Contracts.OSWAP_RestrictedFactory(wallet, factoryAddress);
-        return await groupQ.getPair(Object.assign(Object.assign({}, params), { param3: 0 }));
+        return await groupQ.getPair({ ...params, param3: 0 });
     }
     exports.getPair = getPair;
     async function doNewVote(state, quorum, threshold, voteEndTime, exeDelay, exeCmd, exeParams1, exeParams2) {
@@ -435,7 +438,7 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         let executor = Executor4;
         let factoryContract = new oswap_openswap_contract_1.Contracts.OSWAP_RestrictedFactory(wallet, Addresses.OSWAP_RestrictedFactory);
         exeParams2 = Addresses.OSWAP_RestrictedOracle;
-        let tokens = exeParams1.map(e => (e === null || e === void 0 ? void 0 : e.address) ? e : WETH9);
+        let tokens = exeParams1.map(e => e?.address ? e : WETH9);
         let oldOracle = await factoryContract.oracles({ param1: tokens[0].address, param2: tokens[1].address });
         let oracleName;
         let existingOracle = await factoryContract.isOracle(exeParams2);
@@ -460,7 +463,7 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         let receipt = await votingRegistry.newVote(param);
         const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, Addresses.OAXDEX_Governance);
         let event = governance.parseNewVoteEvent(receipt)[0];
-        result = (event === null || event === void 0 ? void 0 : event.vote) || '';
+        result = event?.vote || '';
         return result;
     }
     exports.doNewVote = doNewVote;
@@ -470,7 +473,7 @@ define("@scom/scom-governance-proposal/api.ts", ["require", "exports", "@ijstech
         const govAddress = state.getAddresses(chainId).OAXDEX_Governance;
         const governance = new oswap_openswap_contract_1.Contracts.OAXDEX_Governance(wallet, govAddress);
         let event = governance.parseNewVoteEvent(receipt)[0];
-        return (event === null || event === void 0 ? void 0 : event.vote) || '';
+        return event?.vote || '';
     }
     exports.parseNewVoteEvent = parseNewVoteEvent;
 });
@@ -524,8 +527,7 @@ define("@scom/scom-governance-proposal/formSchema.ts", ["require", "exports", "@
                         return networkPicker;
                     },
                     getData: (control) => {
-                        var _a;
-                        return (_a = control.selectedNetwork) === null || _a === void 0 ? void 0 : _a.chainId;
+                        return control.selectedNetwork?.chainId;
                     },
                     setData: (control, value) => {
                         control.setNetworkByChainId(value);
@@ -640,11 +642,10 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             this.registerEvents();
         }
         async handleClickStart() {
-            var _a, _b, _c, _d;
             if (!this.hasEnoughStake)
                 return;
-            this.executionProperties.fromToken = ((_a = this.fromTokenInput.token) === null || _a === void 0 ? void 0 : _a.address) || ((_b = this.fromTokenInput.token) === null || _b === void 0 ? void 0 : _b.symbol);
-            this.executionProperties.toToken = ((_c = this.toTokenInput.token) === null || _c === void 0 ? void 0 : _c.address) || ((_d = this.toTokenInput.token) === null || _d === void 0 ? void 0 : _d.symbol);
+            this.executionProperties.fromToken = this.fromTokenInput.token?.address || this.fromTokenInput.token?.symbol;
+            this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
             if (this.state.handleUpdateStepStatus)
                 this.state.handleUpdateStepStatus({
                     caption: "Completed",
@@ -717,22 +718,19 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             this._data.defaultChainId = value;
         }
         get wallets() {
-            var _a;
-            return (_a = this._data.wallets) !== null && _a !== void 0 ? _a : [];
+            return this._data.wallets ?? [];
         }
         set wallets(value) {
             this._data.wallets = value;
         }
         get networks() {
-            var _a;
-            return (_a = this._data.networks) !== null && _a !== void 0 ? _a : [];
+            return this._data.networks ?? [];
         }
         set networks(value) {
             this._data.networks = value;
         }
         get showHeader() {
-            var _a;
-            return (_a = this._data.showHeader) !== null && _a !== void 0 ? _a : true;
+            return this._data.showHeader ?? true;
         }
         set showHeader(value) {
             this._data.showHeader = value;
@@ -834,7 +832,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         message: 'Please Select a pair'
                     },
                     {
-                        validator: (value) => { var _a, _b, _c; return (_b = value !== ((_a = this.form.secondToken) === null || _a === void 0 ? void 0 : _a.address)) !== null && _b !== void 0 ? _b : (_c = this.form.secondToken) === null || _c === void 0 ? void 0 : _c.symbol; },
+                        validator: (value) => value !== this.form.secondToken?.address ?? this.form.secondToken?.symbol,
                         message: 'A pair must not be the same'
                     },
                 ],
@@ -844,7 +842,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         message: 'Please Select a pair'
                     },
                     {
-                        validator: (value) => { var _a, _b, _c; return (_b = value !== ((_a = this.form.firstToken) === null || _a === void 0 ? void 0 : _a.address)) !== null && _b !== void 0 ? _b : (_c = this.form.firstToken) === null || _c === void 0 ? void 0 : _c.symbol; },
+                        validator: (value) => value !== this.form.firstToken?.address ?? this.form.firstToken?.symbol,
                         message: 'A pair must not be the same'
                     },
                 ]
@@ -881,7 +879,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             };
             this.initializeWidgetConfig = async () => {
                 setTimeout(async () => {
-                    var _a;
                     const chainId = this.chainId;
                     scom_token_list_3.tokenStore.updateTokenMapData(chainId);
                     await this.initWallet();
@@ -909,7 +906,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         this.secondTokenSelection.address = this._data.toToken;
                         this.onSelectSecondToken(this.secondTokenSelection.token);
                     }
-                    const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
+                    const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
                     this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${(0, index_3.formatNumber)(this.minThreshold)} ${tokenSymbol}`;
                     this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
                     this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
@@ -933,7 +930,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 else {
                     params.content = content;
                 }
-                this.txStatusModal.message = Object.assign({}, params);
+                this.txStatusModal.message = { ...params };
                 this.txStatusModal.showModal();
             };
             this.connectWallet = async () => {
@@ -980,8 +977,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 try {
                     const delayInSeconds = this.form.delay;
                     const chainId = this.chainId;
-                    const firstToken = (fromToken === null || fromToken === void 0 ? void 0 : fromToken.address) || (fromToken === null || fromToken === void 0 ? void 0 : fromToken.symbol);
-                    const secondToken = (toToken === null || toToken === void 0 ? void 0 : toToken.address) || (toToken === null || toToken === void 0 ? void 0 : toToken.symbol);
+                    const firstToken = fromToken?.address || fromToken?.symbol;
+                    const secondToken = toToken?.address || toToken?.symbol;
                     this.showResultMessage('warning', 'Creating new Executive Proposal');
                     const txHashCallback = async (err, receipt) => {
                         if (err) {
@@ -1119,10 +1116,10 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                 this._data.defaultChainId = this._data.networks[0].chainId;
                                 this.resetRpcWallet();
                                 this.refreshUI();
-                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                if (builder?.setData)
                                     builder.setData(this._data);
                                 oldTag = JSON.parse(JSON.stringify(this.tag));
-                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
+                                if (builder?.setTag)
                                     builder.setTag(themeSettings);
                                 else
                                     this.setTag(themeSettings);
@@ -1132,10 +1129,10 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             undo: () => {
                                 this._data = JSON.parse(JSON.stringify(oldData));
                                 this.refreshUI();
-                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                if (builder?.setData)
                                     builder.setData(this._data);
                                 this.tag = JSON.parse(JSON.stringify(oldTag));
-                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
+                                if (builder?.setTag)
                                     builder.setTag(this.tag);
                                 else
                                     this.setTag(this.tag);
@@ -1188,7 +1185,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     getData: this.getData.bind(this),
                     setData: async (data) => {
                         const defaultData = data_json_1.default.defaultBuilderData;
-                        await this.setData(Object.assign(Object.assign({}, defaultData), data));
+                        await this.setData({ ...defaultData, ...data });
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -1197,12 +1194,13 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     name: 'Embedder Configurator',
                     target: 'Embedders',
                     getData: async () => {
-                        return Object.assign({}, this._data);
+                        return { ...this._data };
                     },
                     setData: async (properties, linkParams) => {
-                        var _a;
-                        let resultingData = Object.assign({}, properties);
-                        if (!properties.defaultChainId && ((_a = properties.networks) === null || _a === void 0 ? void 0 : _a.length)) {
+                        let resultingData = {
+                            ...properties
+                        };
+                        if (!properties.defaultChainId && properties.networks?.length) {
                             resultingData.defaultChainId = properties.networks[0].chainId;
                         }
                         await this.setData(resultingData);
@@ -1224,8 +1222,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             return this.tag;
         }
         updateTag(type, value) {
-            var _a;
-            this.tag[type] = (_a = this.tag[type]) !== null && _a !== void 0 ? _a : {};
+            this.tag[type] = this.tag[type] ?? {};
             for (let prop in value) {
                 if (value.hasOwnProperty(prop))
                     this.tag[type][prop] = value[prop];
@@ -1245,7 +1242,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 this.dappContainer.setTag(this.tag);
         }
         resetRpcWallet() {
-            var _a;
             this.removeRpcWalletEvents();
             const rpcWalletId = this.state.initRpcWallet(this.defaultChainId);
             const rpcWallet = this.state.getRpcWallet();
@@ -1268,7 +1264,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 showHeader: this.showHeader,
                 rpcWalletId: rpcWallet.instanceId
             };
-            if ((_a = this.dappContainer) === null || _a === void 0 ? void 0 : _a.setData)
+            if (this.dappContainer?.setData)
                 this.dappContainer.setData(data);
         }
         async refreshUI() {
@@ -1300,7 +1296,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             return message;
         }
         onValidateInput(name) {
-            var _a;
             const rules = this.rules[name] || [];
             let result = true;
             if (rules.length) {
@@ -1315,7 +1310,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     const rule = rules[i];
                     const emptyValue = ((inputElm && (inputElm.value === undefined || inputElm.value === '')) || (selectElm && !selectElm.selectedItem));
                     const invalidValue = (rule.required !== undefined && emptyValue) ||
-                        (rule.max !== undefined && ((_a = inputElm.value) === null || _a === void 0 ? void 0 : _a.length) > rule.max) ||
+                        (rule.max !== undefined && inputElm.value?.length > rule.max) ||
                         (rule.validator !== undefined && !rule.validator(inputElm.value));
                     if (invalidValue && errorElm) {
                         errorElm.caption = typeof rule.message === 'string' ? rule.message : this.getErrorMessage(name, rule.message);
@@ -1328,7 +1323,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             return result;
         }
         onValidateSelection(name) {
-            var _a;
             const rules = this.rules[name] || [];
             let result = true;
             if (rules.length) {
@@ -1341,7 +1335,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 for (let i = 0; i < ruleLength; i++) {
                     const rule = rules[i];
                     const invalidValue = (rule.required !== undefined && !inputElm.token) ||
-                        (rule.validator !== undefined && inputElm.token && !rule.validator((_a = inputElm.token.address) !== null && _a !== void 0 ? _a : inputElm.token.symbol));
+                        (rule.validator !== undefined && inputElm.token && !rule.validator(inputElm.token.address ?? inputElm.token.symbol));
                     if (invalidValue && errorElm) {
                         errorElm.caption = rule.message;
                         errorElm.visible = true;
@@ -1386,7 +1380,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                 delay,
                 threshold
             };
-            return result = Object.assign(Object.assign({}, result), { firstToken, secondToken });
+            return result = { ...result, firstToken, secondToken };
         }
         onValidate() {
             const validateKeys = Object.keys(this.getCheckingProps());
@@ -1401,13 +1395,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             return hasValid;
         }
         onConfirm() {
-            var _a;
             if (!(0, index_3.isClientWalletConnected)() || !this.state.isRpcWalletConnected()) {
                 this.connectWallet();
                 return;
             }
             if (!this.isValidToCreateVote) {
-                const tokenSymbol = ((_a = this.state.getGovToken(this.chainId)) === null || _a === void 0 ? void 0 : _a.symbol) || '';
+                const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
                 this.showResultMessage('error', `Minimum ${this.minThreshold} ${tokenSymbol} Required`);
             }
             else {
@@ -1434,10 +1427,10 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                             this.$render("i-icon", { name: "question-circle", fill: "#fff", width: 16, height: 16, tooltip: { content: 'The pair you want to register in the Oracle', placement: 'right' } })),
                                         this.$render("i-hstack", { gap: "1rem" },
                                             this.$render("i-vstack", { horizontalAlignment: "start", gap: "0.5rem" },
-                                                this.$render("i-scom-token-input", { id: "firstTokenSelection", class: "custom-token-selection", width: "auto", height: 34, type: "button", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, onSelectToken: this.onSelectFirstToken.bind(this) }),
+                                                this.$render("i-scom-token-input", { id: "firstTokenSelection", class: "custom-token-selection", width: "auto", height: 34, type: "button", importable: true, isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, onSelectToken: this.onSelectFirstToken.bind(this) }),
                                                 this.$render("i-label", { id: "firstTokenErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false })),
                                             this.$render("i-vstack", { horizontalAlignment: "start", gap: "0.5rem" },
-                                                this.$render("i-scom-token-input", { id: "secondTokenSelection", class: "custom-token-selection", width: "auto", height: 34, type: "button", isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, onSelectToken: this.onSelectSecondToken.bind(this) }),
+                                                this.$render("i-scom-token-input", { id: "secondTokenSelection", class: "custom-token-selection", width: "auto", height: 34, type: "button", importable: true, isBalanceShown: false, isBtnMaxShown: false, isInputShown: false, onSelectToken: this.onSelectSecondToken.bind(this) }),
                                                 this.$render("i-label", { id: "secondTokenErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }))),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "lblMinVotingBalance", font: { size: '0.875rem' }, margin: { left: 'auto' } })))),

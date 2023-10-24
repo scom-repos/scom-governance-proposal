@@ -896,6 +896,7 @@ export default class GovernanceProposal extends Module {
                                                     width="auto"
                                                     height={34}
                                                     type="button"
+                                                    importable={true}
                                                     isBalanceShown={false}
                                                     isBtnMaxShown={false}
                                                     isInputShown={false}
@@ -910,6 +911,7 @@ export default class GovernanceProposal extends Module {
                                                     width="auto"
                                                     height={34}
                                                     type="button"
+                                                    importable={true}
                                                     isBalanceShown={false}
                                                     isBtnMaxShown={false}
                                                     isInputShown={false}
