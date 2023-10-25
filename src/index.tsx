@@ -736,6 +736,12 @@ export default class GovernanceProposal extends Module {
             const confirmationCallback = async (receipt: any) => {
                 const address = parseNewVoteEvent(this.state, receipt);
                 if (!address) return;
+                if (this.state.handleUpdateStepStatus) {
+                    this.state.handleUpdateStepStatus({
+                        caption: "Completed",
+                        color: Theme.colors.success.main
+                    });
+                }
                 if (this.state.handleAddTransactions) {
                     const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                     const transactionsInfoArr = [
@@ -753,12 +759,6 @@ export default class GovernanceProposal extends Module {
                     ];
                     this.state.handleAddTransactions({
                         list: transactionsInfoArr
-                    });
-                }
-                if (this.state.handleUpdateStepStatus) {
-                    this.state.handleUpdateStepStatus({
-                        caption: "Completed",
-                        color: Theme.colors.success.main
                     });
                 }
                 wallet.registerSendTxEvents({});

@@ -993,6 +993,12 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         const address = (0, api_2.parseNewVoteEvent)(this.state, receipt);
                         if (!address)
                             return;
+                        if (this.state.handleUpdateStepStatus) {
+                            this.state.handleUpdateStepStatus({
+                                caption: "Completed",
+                                color: Theme.colors.success.main
+                            });
+                        }
                         if (this.state.handleAddTransactions) {
                             const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
                             const transactionsInfoArr = [
@@ -1010,12 +1016,6 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             ];
                             this.state.handleAddTransactions({
                                 list: transactionsInfoArr
-                            });
-                        }
-                        if (this.state.handleUpdateStepStatus) {
-                            this.state.handleUpdateStepStatus({
-                                caption: "Completed",
-                                color: Theme.colors.success.main
                             });
                         }
                         wallet.registerSendTxEvents({});
