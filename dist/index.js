@@ -914,7 +914,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.lblDelayMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
                     this.durationInput.placeholder = `${Math.ceil(this.minVoteDurationInDays)}`;
                     this.delayInput.placeholder = `${Math.ceil(this.minDelay)}`;
-                    this.durationInput.value = this.form.duration;
+                    this.durationInput.value = this.form.duration > 0 ? this.form.duration : 180;
                     this.delayInput.value = this.form.delay;
                     this.quorumInput.value = this.form.quorum;
                     this.thresholdInput.value = this.form.threshold;
