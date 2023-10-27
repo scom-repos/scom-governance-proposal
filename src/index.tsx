@@ -738,7 +738,7 @@ export default class GovernanceProposal extends Module {
                 if (!address) return;
                 if (this.state.handleUpdateStepStatus) {
                     this.state.handleUpdateStepStatus({
-                        caption: "Completed",
+                        status: "Completed",
                         color: Theme.colors.success.main
                     });
                 }

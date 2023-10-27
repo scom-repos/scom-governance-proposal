@@ -648,7 +648,7 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
             this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
             if (this.state.handleUpdateStepStatus)
                 this.state.handleUpdateStepStatus({
-                    caption: "Completed",
+                    status: "Completed",
                     color: Theme.colors.success.main
                 });
             if (this.state.handleNextFlowStep)
@@ -995,7 +995,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                             return;
                         if (this.state.handleUpdateStepStatus) {
                             this.state.handleUpdateStepStatus({
-                                caption: "Completed",
+                                status: "Completed",
                                 color: Theme.colors.success.main
                             });
                         }

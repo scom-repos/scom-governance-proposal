@@ -148,7 +148,7 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
         this.executionProperties.toToken = this.toTokenInput.token?.address || this.toTokenInput.token?.symbol;
         if (this.state.handleUpdateStepStatus)
             this.state.handleUpdateStepStatus({
-                caption: "Completed",
+                status: "Completed",
                 color: Theme.colors.success.main
             });
         if (this.state.handleNextFlowStep)
