@@ -996,7 +996,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         if (this.state.handleUpdateStepStatus) {
                             this.state.handleUpdateStepStatus({
                                 status: "Completed",
-                                color: Theme.colors.success.main
+                                color: Theme.colors.success.main,
+                                message: address
                             });
                         }
                         if (this.state.handleAddTransactions) {
