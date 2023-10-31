@@ -19,6 +19,7 @@ declare module "@scom/scom-governance-proposal/interface.ts" {
         showHeader?: boolean;
         fromToken?: string;
         toToken?: string;
+        customTokens?: Record<number, ITokenObject[]>;
         isFlow?: boolean;
     }
     export interface IValidateStatus {
@@ -254,6 +255,7 @@ declare module "@scom/scom-governance-proposal" {
     import { INetworkConfig } from "@scom/scom-network-picker";
     import { IWalletPlugin } from "@scom/scom-wallet-modal";
     import { IGovernanceProposal } from "@scom/scom-governance-proposal/interface.ts";
+    import { ITokenObject } from "@scom/scom-token-list";
     interface ScomGovernanceProposalElement extends ControlElement {
         lazyLoad?: boolean;
         networks: INetworkConfig[];
@@ -357,6 +359,7 @@ declare module "@scom/scom-governance-proposal" {
                 showHeader?: boolean;
                 fromToken?: string;
                 toToken?: string;
+                customTokens?: Record<number, ITokenObject[]>;
                 isFlow?: boolean;
             }>;
             setData: (properties: IGovernanceProposal, linkParams?: Record<string, any>) => Promise<void>;

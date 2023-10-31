@@ -902,14 +902,18 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.firstTokenSelection.tokenReadOnly = this.isFlow;
                     this.secondTokenSelection.tokenReadOnly = this.isFlow;
                     const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
-                    this.firstTokenSelection.tokenDataListProp = tokens;
-                    this.secondTokenSelection.tokenDataListProp = tokens;
+                    const customTokens = this._data.customTokens[this.chainId] ?? [];
+                    const tokenList = [...tokens, ...customTokens];
+                    this.firstTokenSelection.tokenDataListProp = tokenList;
+                    this.secondTokenSelection.tokenDataListProp = tokenList;
                     if (this._data.fromToken) {
-                        this.firstTokenSelection.address = this._data.fromToken;
+                        const fromToken = this._data.fromToken.toLowerCase();
+                        this.firstTokenSelection.token = tokenList.find(t => t.symbol.toLowerCase() === fromToken || t.address?.toLowerCase() === fromToken);
                         this.onSelectFirstToken(this.firstTokenSelection.token);
                     }
                     if (this._data.toToken) {
-                        this.secondTokenSelection.address = this._data.toToken;
+                        const toToken = this._data.toToken.toLowerCase();
+                        this.secondTokenSelection.token = tokenList.find(t => t.symbol.toLowerCase() === toToken || t.address?.toLowerCase() === toToken);
                         this.onSelectSecondToken(this.secondTokenSelection.token);
                     }
                     const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
@@ -1033,6 +1037,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                     votingAddress: address,
                                     fromToken: firstToken || '',
                                     toToken: secondToken || '',
+                                    customTokens: this._data.customTokens,
                                     isFlow: true
                                 }
                             });
