@@ -155,7 +155,8 @@ export default class ScomGovernanceProposalFlowInitialSetup extends Module {
             this.state.handleNextFlowStep({
                 isInitialSetup: true,
                 tokenRequirements: this.tokenRequirements,
-                executionProperties: this.executionProperties
+                executionProperties: this.executionProperties,
+                isFlow: true
             });
     }
     render() {

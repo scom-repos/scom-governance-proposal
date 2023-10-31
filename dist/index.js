@@ -655,7 +655,8 @@ define("@scom/scom-governance-proposal/flow/initialSetup.tsx", ["require", "expo
                 this.state.handleNextFlowStep({
                     isInitialSetup: true,
                     tokenRequirements: this.tokenRequirements,
-                    executionProperties: this.executionProperties
+                    executionProperties: this.executionProperties,
+                    isFlow: true
                 });
         }
         render() {
@@ -740,6 +741,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
         }
         get isValidToCreateVote() {
             return this.hasEnoughStake;
+        }
+        get isFlow() {
+            return this._data.isFlow ?? false;
         }
         constructor(parent, options) {
             super(parent, options);
@@ -895,6 +899,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     }
                     this.firstTokenSelection.chainId = chainId;
                     this.secondTokenSelection.chainId = chainId;
+                    this.firstTokenSelection.tokenReadOnly = this.isFlow;
+                    this.secondTokenSelection.tokenReadOnly = this.isFlow;
                     const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
                     this.firstTokenSelection.tokenDataListProp = tokens;
                     this.secondTokenSelection.tokenDataListProp = tokens;

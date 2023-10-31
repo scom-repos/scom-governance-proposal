@@ -226,6 +226,10 @@ export default class GovernanceProposal extends Module {
     private get isValidToCreateVote() {
         return this.hasEnoughStake;
     }
+    
+    private get isFlow() {
+        return this._data.isFlow ?? false;
+    }
 
     constructor(parent?: Container, options?: any) {
         super(parent, options);
@@ -525,6 +529,8 @@ export default class GovernanceProposal extends Module {
             }
             this.firstTokenSelection.chainId = chainId;
             this.secondTokenSelection.chainId = chainId;
+            this.firstTokenSelection.tokenReadOnly = this.isFlow;
+            this.secondTokenSelection.tokenReadOnly = this.isFlow;
             const tokens = tokenStore.getTokenList(chainId);
             this.firstTokenSelection.tokenDataListProp = tokens;
             this.secondTokenSelection.tokenDataListProp = tokens;

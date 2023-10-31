@@ -321,6 +321,7 @@ declare module "@scom/scom-governance-proposal" {
         set showHeader(value: boolean);
         private get hasEnoughStake();
         private get isValidToCreateVote();
+        private get isFlow();
         constructor(parent?: Container, options?: any);
         removeRpcWalletEvents(): void;
         onHide(): void;
