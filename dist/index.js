@@ -902,7 +902,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     this.firstTokenSelection.tokenReadOnly = this.isFlow;
                     this.secondTokenSelection.tokenReadOnly = this.isFlow;
                     const tokens = scom_token_list_3.tokenStore.getTokenList(chainId);
-                    const customTokens = this._data.customTokens[this.chainId] ?? [];
+                    const customTokens = this._data.customTokens?.[this.chainId] ?? [];
                     const tokenList = [...tokens, ...customTokens];
                     this.firstTokenSelection.tokenDataListProp = tokenList;
                     this.secondTokenSelection.tokenDataListProp = tokenList;

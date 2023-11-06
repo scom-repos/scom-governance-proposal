@@ -532,7 +532,7 @@ export default class GovernanceProposal extends Module {
             this.firstTokenSelection.tokenReadOnly = this.isFlow;
             this.secondTokenSelection.tokenReadOnly = this.isFlow;
             const tokens = tokenStore.getTokenList(chainId);
-            const customTokens = this._data.customTokens[this.chainId] ?? [];
+            const customTokens = this._data.customTokens?.[this.chainId] ?? [];
             const tokenList = [...tokens, ...customTokens];
             this.firstTokenSelection.tokenDataListProp = tokenList;
             this.secondTokenSelection.tokenDataListProp = tokenList;
