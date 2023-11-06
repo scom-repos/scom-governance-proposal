@@ -64,12 +64,12 @@ export default class GovernanceProposal extends Module {
     private lblDuration: Label;
     private durationInput: Input;
     private durationErr: Label;
-    private lblDurationNote: Label;
+    private lblDurationMinNote: Label;
     private lblDelay: Label;
     private delayInput: Input;
     private delayErr: Label;
     private lblDelayMinNote: Label;
-    private lblDelayMaxNote: Label;
+    private lblDurationMaxNote: Label;
     private quorumInput: Input;
     private quorumErr: Label;
     private lblQuorumNote: Label;
@@ -120,8 +120,8 @@ export default class GovernanceProposal extends Module {
             message: `Please select Duration (seconds)`
           },
           {
-            message: (minVoteDurationInDays: number) => `Duration must be greater than or equal to ${minVoteDurationInDays}`,
-            validator: (value: any) => +value >= this.minVoteDurationInDays
+            message: (minVoteDurationInDays: number, maxVoteDurationInDays: number) => `Duration should be between ${minVoteDurationInDays} and ${maxVoteDurationInDays}`,
+            validator: (value: any) => +value >= this.minVoteDurationInDays && +value <= this.maxVoteDurationInDays
           },
         ],
         quorum: [
@@ -548,10 +548,10 @@ export default class GovernanceProposal extends Module {
             }
             const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
             this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${formatNumber(this.minThreshold)} ${tokenSymbol}`;
-            this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
+            this.lblDurationMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
+            this.lblDurationMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
             this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
             this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
-            this.lblDelayMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
             this.durationInput.placeholder = `${Math.ceil(this.minVoteDurationInDays)}`;
             this.delayInput.placeholder = `${Math.ceil(this.minDelay)}`;
             this.durationInput.value = this.form.duration > 0 ? this.form.duration : 180;
@@ -600,7 +600,7 @@ export default class GovernanceProposal extends Module {
         let message = '';
         switch (name) {
             case 'duration':
-                message = callback(this.minVoteDurationInDays);
+                message = callback(this.minVoteDurationInDays, this.maxVoteDurationInDays);
                 break;
             case 'quorum':
                 message = callback(this.minQuorum);
@@ -962,11 +962,10 @@ export default class GovernanceProposal extends Module {
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="durationErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
-                                            <i-label id="lblDurationNote"
-                                                margin={{ left: 'auto' }}
-                                                font={{ size: '0.875rem' }}
-                                                caption="Minimum: 0 second"
-                                            ></i-label>
+                                            <i-vstack margin={{ left: 'auto' }} class="text-right">
+                                                <i-label id="lblDurationMinNote" font={{ size: '0.875rem' }} caption="Minimum: 0 second" ></i-label>
+                                                <i-label id="lblDurationMaxNote" font={{ size: '0.875rem' }} caption="Maximum: 0 second" ></i-label>
+                                            </i-vstack>
                                         </i-hstack>
                                     </i-vstack>
                                     <i-vstack gap="0.5rem" stack={{ grow: '1', shrink: '0', basis: '330px' }}>
@@ -992,10 +991,12 @@ export default class GovernanceProposal extends Module {
                                         ></i-input>
                                         <i-hstack horizontalAlignment="space-between">
                                             <i-label id="delayErr" font={{ color: '#f5222d', size: '0.875rem' }} visible={false}></i-label>
-                                            <i-vstack margin={{ left: 'auto' }} class="text-right">
-                                                <i-label id="lblDelayMinNote" font={{ size: '0.875rem' }} caption="Minimum: 0 second" ></i-label>
-                                                <i-label id="lblDelayMaxNote" font={{ size: '0.875rem' }} caption="Maximum: 0 second" ></i-label>
-                                            </i-vstack>
+                                            <i-label
+                                                id="lblDelayMinNote"
+                                                font={{ size: '0.875rem' }}
+                                                caption="Minimum: 0 second"
+                                                margin={{ left: 'auto' }}
+                                            ></i-label>
                                         </i-hstack>
                                     </i-vstack>
                                 </i-hstack>

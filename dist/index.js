@@ -786,8 +786,8 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                         message: `Please select Duration (seconds)`
                     },
                     {
-                        message: (minVoteDurationInDays) => `Duration must be greater than or equal to ${minVoteDurationInDays}`,
-                        validator: (value) => +value >= this.minVoteDurationInDays
+                        message: (minVoteDurationInDays, maxVoteDurationInDays) => `Duration should be between ${minVoteDurationInDays} and ${maxVoteDurationInDays}`,
+                        validator: (value) => +value >= this.minVoteDurationInDays && +value <= this.maxVoteDurationInDays
                     },
                 ],
                 quorum: [
@@ -918,10 +918,10 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                     }
                     const tokenSymbol = this.state.getGovToken(this.chainId)?.symbol || '';
                     this.lblMinVotingBalance.caption = `Minimum Voting Balance: ${(0, index_3.formatNumber)(this.minThreshold)} ${tokenSymbol}`;
-                    this.lblDurationNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
+                    this.lblDurationMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minVoteDurationInDays)}`;
+                    this.lblDurationMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
                     this.lblQuorumNote.caption = `Minimum: ${this.minQuorum}`;
                     this.lblDelayMinNote.caption = `Minimum: ${this.checkTimeFormat(this.minDelay)}`;
-                    this.lblDelayMaxNote.caption = `Maximum: ${this.checkTimeFormat(this.maxVoteDurationInDays)}`;
                     this.durationInput.placeholder = `${Math.ceil(this.minVoteDurationInDays)}`;
                     this.delayInput.placeholder = `${Math.ceil(this.minDelay)}`;
                     this.durationInput.value = this.form.duration > 0 ? this.form.duration : 180;
@@ -1295,7 +1295,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
             let message = '';
             switch (name) {
                 case 'duration':
-                    message = callback(this.minVoteDurationInDays);
+                    message = callback(this.minVoteDurationInDays, this.maxVoteDurationInDays);
                     break;
                 case 'quorum':
                     message = callback(this.minQuorum);
@@ -1457,7 +1457,9 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-input", { id: "durationInput", height: 32, width: "100%", inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onDurationChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "durationErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
-                                            this.$render("i-label", { id: "lblDurationNote", margin: { left: 'auto' }, font: { size: '0.875rem' }, caption: "Minimum: 0 second" }))),
+                                            this.$render("i-vstack", { margin: { left: 'auto' }, class: "text-right" },
+                                                this.$render("i-label", { id: "lblDurationMinNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second" }),
+                                                this.$render("i-label", { id: "lblDurationMaxNote", font: { size: '0.875rem' }, caption: "Maximum: 0 second" })))),
                                     this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },
                                             this.$render("i-label", { caption: "*", font: { size: '0.875rem', color: Theme.colors.primary.main } }),
@@ -1466,9 +1468,7 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                         this.$render("i-input", { id: "delayInput", class: 'poll-input', height: 32, width: '100%', inputType: "number", margin: { top: '1rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.colors.primary.main } }, value: "0", onChanged: this.onDelayChanged.bind(this) }),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between" },
                                             this.$render("i-label", { id: "delayErr", font: { color: '#f5222d', size: '0.875rem' }, visible: false }),
-                                            this.$render("i-vstack", { margin: { left: 'auto' }, class: "text-right" },
-                                                this.$render("i-label", { id: "lblDelayMinNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second" }),
-                                                this.$render("i-label", { id: "lblDelayMaxNote", font: { size: '0.875rem' }, caption: "Maximum: 0 second" }))))),
+                                            this.$render("i-label", { id: "lblDelayMinNote", font: { size: '0.875rem' }, caption: "Minimum: 0 second", margin: { left: 'auto' } })))),
                                 this.$render("i-hstack", { width: "100%", gap: "1rem", wrap: "wrap" },
                                     this.$render("i-vstack", { gap: "0.5rem", stack: { grow: '1', shrink: '0', basis: '330px' } },
                                         this.$render("i-hstack", { verticalAlignment: "center", gap: 4 },

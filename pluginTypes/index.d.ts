@@ -283,12 +283,12 @@ declare module "@scom/scom-governance-proposal" {
         private lblDuration;
         private durationInput;
         private durationErr;
-        private lblDurationNote;
+        private lblDurationMinNote;
         private lblDelay;
         private delayInput;
         private delayErr;
         private lblDelayMinNote;
-        private lblDelayMaxNote;
+        private lblDurationMaxNote;
         private quorumInput;
         private quorumErr;
         private lblQuorumNote;
