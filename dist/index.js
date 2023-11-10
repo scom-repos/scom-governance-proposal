@@ -1010,24 +1010,29 @@ define("@scom/scom-governance-proposal", ["require", "exports", "@ijstech/compon
                                 message: address
                             });
                         }
-                        if (this.state.handleAddTransactions) {
-                            const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
-                            const transactionsInfoArr = [
-                                {
-                                    desc: 'Create Pair Executive Proposal',
-                                    chainId: chainId,
-                                    fromToken: null,
-                                    toToken: null,
-                                    fromTokenAmount: '-',
-                                    toTokenAmount: '-',
-                                    hash: receipt.transactionHash,
-                                    timestamp,
-                                    value: address
-                                }
-                            ];
-                            this.state.handleAddTransactions({
-                                list: transactionsInfoArr
-                            });
+                        try {
+                            if (this.state.handleAddTransactions) {
+                                const timestamp = await this.state.getRpcWallet().getBlockTimestamp(receipt.blockNumber.toString());
+                                const transactionsInfoArr = [
+                                    {
+                                        desc: 'Create Pair Executive Proposal',
+                                        chainId: chainId,
+                                        fromToken: null,
+                                        toToken: null,
+                                        fromTokenAmount: '-',
+                                        toTokenAmount: '-',
+                                        hash: receipt.transactionHash,
+                                        timestamp,
+                                        value: address
+                                    }
+                                ];
+                                this.state.handleAddTransactions({
+                                    list: transactionsInfoArr
+                                });
+                            }
+                        }
+                        catch (err) {
+                            console.error(err);
                         }
                         wallet.registerSendTxEvents({});
                         if (this.state.handleJumpToStep) {
